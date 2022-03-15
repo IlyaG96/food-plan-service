@@ -9,7 +9,7 @@
 pip install -r requirements.txt
 ```
 ### Подключите переменные окружения
-Создайте файл .env в директории рядом с `settings.py` и введите
+Создайте файл `.env` в корневой директории рядом с `settings.py` и введите
 ```
 TGBOT_TOKEN=<token>
 ```
