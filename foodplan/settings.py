@@ -10,7 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+from django.core.management.utils import get_random_secret_key
 from pathlib import Path
+
+from environs import Env
+
+
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +27,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-28lw+x7ok3c#-eqq&cbbsu4qtv7k_(oss)hc08ovvo7=ue7-in'
+SECRET_KEY = env.str('SECRET_KEY', get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
 
 # Application definition
@@ -37,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'tgbot',
 ]
 
 MIDDLEWARE = [
@@ -115,9 +124,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Bot settings
+
+TGBOT_TOKEN = env.str('TGBOT_TOKEN')
