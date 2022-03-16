@@ -184,7 +184,7 @@ def check_order(update, context):
     Размер порций: {portion_size}
     Предпочтения: {preferences}
     Длительность подписки: {subscription_length}
-    Общая стоимость: {price}
+    Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
 
@@ -245,7 +245,7 @@ def done(update, context):
 def handle_subscriptions(update, context):
     keyboard = [['Назад ⬅']]
     text = dedent(
-        # subscription for User.subscriptions.all()
+        # subscriptions from User.subscriptions.all()
         'Тут пока пусто, приходи позже :)'
     )
     update.message.reply_text(text=text,
