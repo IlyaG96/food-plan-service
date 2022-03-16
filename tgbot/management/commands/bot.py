@@ -11,6 +11,7 @@ from telegram import (
 )
 from telegram.ext import (CallbackContext, CallbackQueryHandler, CommandHandler, ConversationHandler,
                           Filters, MessageHandler, Updater)
+from textwrap import dedent
 
 
 class BotStates(Enum):
@@ -37,7 +38,7 @@ def start(update, context):
 def get_user_phonenumber(update, context):
 
     if update.message.text != 'Назад ⬅':
-        context.user_data['name'] = update.message.text
+        context.user_data['username'] = update.message.text
 
     phone_request_button = KeyboardButton('Передать контакт', request_contact=True)
     update.message.reply_text(
@@ -128,7 +129,37 @@ def get_subscription_length(update, context):
 
 
 def check_order(update, context):
-    pass
+    if update.message.text != 'Назад ⬅':
+        subscription_length = update.message.text
+        context.user_data['subscription_length'] = subscription_length
+
+    username = context.user_data['username']
+    phonenumber = context.user_data['phonenumber']
+    quantity = context.user_data['quantity']
+    portions_size = context.user_data['portions_size']
+    preferences = context.user_data['preferences']
+    subscription_length = context.user_data['subscription_length']
+
+    price = int(quantity)*int(portions_size)*int(subscription_length)*10
+    # TODO get price from DB
+    order = dedent(
+        f'''
+    Имя: {username}
+    Номер телефона: {phonenumber}
+    Количество порций: {quantity}
+    Размер порций: {portions_size}
+    Предпочтения: {preferences}
+    Длительность подписки: {subscription_length}
+    Общая стоимость: {price}
+    ''')
+
+    keyboard = [['Перейти к оплате!', 'Назад ⬅']]
+    update.message.reply_text(
+        text=order,
+        reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                         resize_keyboard=True,
+                                         ),
+    )
 
 
 def done(update, context):
