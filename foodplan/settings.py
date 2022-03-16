@@ -134,3 +134,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Bot settings
 
 TGBOT_TOKEN = env.str('TGBOT_TOKEN')
+PROVIDER_TOKEN = env.str('PROVIDER_TOKEN')
