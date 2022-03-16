@@ -12,9 +12,11 @@ pip install -r requirements.txt
 Создайте файл `.env` в корневой директории рядом с `settings.py` и введите
 ```
 TGBOT_TOKEN=<token>
+PROVIDER_TOKEN=<token>
 ```
-где token - токен телеграм-бота.
-
+Где:
+- TGBOT_TOKEN - токен телеграм-бота.  
+- PROVIDER_TOKEN - токен провайдера для оплаты. (botfather/mybots/payments - выбрать юкассу, стоимость тестового заказа не более 1000 рублей!)
 ## Запуск бота
 Для запуска бота введите
 ```
