@@ -29,7 +29,7 @@ class Subscribe(models.Model):
         User,
         verbose_name='Пользователь',
         related_name='subscribes',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
     )
     preference = models.ForeignKey(
         Preference,
@@ -41,7 +41,6 @@ class Subscribe(models.Model):
         Allergy,
         verbose_name='Аллергии',
         related_name='subscribes',
-        null=True,
     )
     number_of_meals = models.PositiveSmallIntegerField(
         'Количество приемов пищи в день',
@@ -88,14 +87,14 @@ class Dish(models.Model):
     preferences = models.ForeignKey(
         Preference,
         verbose_name='Подходит для:',
-        related_name='appropriate dishes',
+        related_name='appropriate_dishes',
         on_delete=models.SET_NULL,
+        null=True,
     )
     allergy = models.ManyToManyField(
         Allergy,
         verbose_name='Не подходит для:',
-        related_name='inappropriate dishes',
-        null=True,
+        related_name='inappropriate_dishes',
     )
     calories = models.PositiveSmallIntegerField(
         'Калорийность',
