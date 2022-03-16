@@ -150,7 +150,8 @@ def check_order(update, context):
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
 
-    price = int(portions_quantity)*int(portion_size)*int(subscription_length)*10
+    price = int(portions_quantity)*int(portion_size)*int(subscription_length)
+    # in test payment price should be less than 1000 rub!
     context.user_data['price'] = price
 
     # TODO get price from DB
@@ -275,7 +276,7 @@ def main():
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
         per_user=True,
-        per_chat=True,
+        per_chat=False,
         allow_reentry=True
     )
 
