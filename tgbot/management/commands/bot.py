@@ -53,6 +53,7 @@ def build_menu(buttons, n_cols,
 
 def start(update, context):
     user_id = update.message.chat_id
+    context.user_data['user_id'] = user_id
     if not User.objects.filter(chat_id__contains=user_id):
         return get_username(update, context)
     keyboard = [['Мои подписки', 'Новая подписка']]
@@ -66,10 +67,6 @@ def start(update, context):
 
 
 def get_username(update, context):
-    # TODO pass if user exists
-    user_id = update.message.chat_id
-    context.user_data['user_id'] = user_id
-
     keyboard = [['Передать контакт (не жмякать, не работает)']]
     update.message.reply_text(
         'Познакомимся? Пожалуйста, представься. Напиши имя и фамилию',
@@ -255,8 +252,9 @@ def check_order(update, context):
         subscription_length = update.message.text
         context.user_data['subscription_length'] = subscription_length
 
-    username = context.user_data['username']
-    phonenumber = context.user_data['phonenumber']
+    user = User.objects.get(chat_id=context.user_data['user_id'])
+    username = user.first_name
+    phonenumber = user.phone
     portions_quantity = context.user_data['portions_quantity']
     portion_size = context.user_data['portion_size']
     allergens = context.user_data['allergens']
