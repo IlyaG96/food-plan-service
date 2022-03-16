@@ -130,7 +130,7 @@ def get_subscription_length(update, context):
         # TODO replace from db
     keyboard = [[str(num) for num in range(1, 13)], ['Назад ⬅']]
     update.message.reply_text(
-        'На сколько месяцев Вы хотите оформить подписку?',
+        'На сколько месяцев оформить подписку?',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
                                          resize_keyboard=True,
                                          ),
@@ -186,7 +186,7 @@ def take_payment(update, context):
     provider_token = settings.PROVIDER_TOKEN
     chat_id = update.message.chat_id
     title = 'Ваш заказ'
-    description = f'Оплата вашего заказа стоимостью {price} рублей'
+    description = f'Оплата заказа стоимостью {price} рублей'
     payload = 'Custom-Payload'
 
     currency = 'RUB'
@@ -234,6 +234,7 @@ def main():
             ],
 
             BotStates.GET_PHONENUMBER: [
+                MessageHandler(Filters.contact, get_portion_size),
                 MessageHandler(Filters.regex(r'^\+?\d{1,3}?( |-)?\d{3}( |-)?\d{3}( |-)?\d{2}( |-)?\d{2}$'),
                                get_portion_size),
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
