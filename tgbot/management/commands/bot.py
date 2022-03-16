@@ -172,7 +172,7 @@ def get_allergy(update, context):
             ([InlineKeyboardButton(allergen,
                                    callback_data=allergen)
               for allergen in allergens]),
-            n_cols=2))
+            n_cols=1))
     )
 
     return BotStates.HANDLE_ALLERGY
@@ -198,7 +198,7 @@ def handle_allergy(update, context):
             ([InlineKeyboardButton(allergen,
                                    callback_data=allergen)
               for allergen in allergens]),
-            n_cols=2))
+            n_cols=1))
     )
 
 
