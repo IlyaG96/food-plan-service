@@ -183,13 +183,12 @@ def handle_allergy(update, context):
 
     callback_query = update.callback_query
     choice = callback_query.data
-    if choice in allergens and '*' in choice:
+    if choice in allergens and '**' in choice:
         allergen_index = allergens.index(choice)
-        allergens[allergen_index] = choice.replace('*', "")
+        allergens[allergen_index] = choice.replace('**', "")
     if choice in allergens:
         allergen_index = allergens.index(choice)
-        allergens[allergen_index] = choice + '*'
-
+        allergens[allergen_index] = choice + '**'
 
     context.bot.edit_message_text(
         text='У меня аллергия на:',
@@ -204,6 +203,8 @@ def handle_allergy(update, context):
 
 
 def get_portions_quantity(update, context):
+    if update.message.text == 'Пропустить':
+        context.user_data['allergens'] = None
     # TODO replace from db
     keyboard = build_menu([str(num) for num in range(1, 11)],
                           n_cols=5,
@@ -242,7 +243,12 @@ def check_order(update, context):
     phonenumber = context.user_data['phonenumber']
     portions_quantity = context.user_data['portions_quantity']
     portion_size = context.user_data['portion_size']
-    allergens = list(filter(lambda word: '*' in word, context.user_data['allergens']))
+    allergens = context.user_data['allergens']
+    if not allergens:
+        allergens = 'отсутствует'
+    else:
+        allergens = list(filter(lambda word: '**' in word, allergens))
+
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
     price = int(portions_quantity) * int(portion_size) * int(subscription_length)
