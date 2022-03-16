@@ -18,6 +18,7 @@ from telegram.ext import (CallbackContext,
                           Filters,
                           MessageHandler,
                           Updater)
+from tgbot.models import User                        
 
 from textwrap import dedent
 
@@ -51,6 +52,9 @@ def build_menu(buttons, n_cols,
 
 
 def start(update, context):
+    user_id = update.message.chat_id
+    if not User.objects.filter(chat_id__contains=user_id):
+        return get_username(update, context)
     keyboard = [['Мои подписки', 'Новая подписка']]
     update.message.reply_text('Привет! '
                               'Я - бот, который составит для тебя рацион питания и упростит жизнь. '
@@ -97,13 +101,25 @@ def get_user_phonenumber(update, context):
     return BotStates.GET_PHONENUMBER
 
 
+def add_new_user(update, context):
+    if update.message.contact:
+        phone = update.message.contact.phone_number
+    else:
+        phone = update.message.text
+    first_name, last_name = context.user_data['username'].split(' ')
+    chat_id = context.user_data['user_id']
+    User.objects.get_or_create(
+        first_name=first_name,
+        last_name=last_name,
+        chat_id=chat_id,
+        phone=phone,
+    )
+    return start(update, context)
+
+
 def get_portion_size(update, context):
-    if update.message.text != 'Назад ⬅':
-        if update.message.contact:
-            phone_number = update.message.contact.phone_number
-        else:
-            phone_number = update.message.text
-        context.user_data['phonenumber'] = phone_number
+    # if update.message.text != 'Назад ⬅':
+        
 
     # TODO replace from db
     keyboard = build_menu([str(num) for num in range(1, 11)],
@@ -339,12 +355,12 @@ def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', get_username)],
+        entry_points=[CommandHandler('start', start)],
         states={
             BotStates.GREET_USER: [
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
-                MessageHandler(Filters.regex(r'Новая подписка$'), get_username),
-                MessageHandler(Filters.text, get_username)
+                MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
+                # MessageHandler(Filters.text, get_username)
             ],
             BotStates.GET_USERNAME: [
                 MessageHandler(Filters.regex(r'[а-яА-Яa-zA-Z]{2,20}( )[а-яА-Яa-zA-Z]{2,20}$'),
@@ -354,16 +370,16 @@ def main():
             ],
 
             BotStates.GET_PHONENUMBER: [
-                MessageHandler(Filters.contact, get_portion_size),
+                MessageHandler(Filters.contact, add_new_user),
                 MessageHandler(Filters.regex(r'^\+?\d{1,3}?( |-)?\d{3}( |-)?\d{3}( |-)?\d{2}( |-)?\d{2}$'),
-                               get_portion_size),
+                               add_new_user),
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), get_username),
-                MessageHandler(Filters.text, get_user_phonenumber)
+                # MessageHandler(Filters.text, get_user_phonenumber)
             ],
 
             BotStates.GET_PORTIONS_SIZE: [
                 MessageHandler(Filters.regex(r'[0-9]{1,2}$'), get_preferences),
-                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_user_phonenumber),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
                 MessageHandler(Filters.text, get_portion_size)
             ],
 
