@@ -34,13 +34,31 @@ class BotStates(Enum):
     TAKE_PAYMENT = 9
     PRECHECKOUT = 10
     SUCCESS_PAYMENT = 11
+    HANDLE_SUBSCRIPTIONS = 12
 
 
 def start(update, context):
 
-    update.message.reply_text('Привет! Познакомимся? Я - бот, который облегчит тебе жизнь и спланирует рацион за тебя. '
-                              'Пожалуйста, представься. Напиши имя и фамилию',
-                              )
+    keyboard = [['Мои подписки', 'Новая подписка']]
+    update.message.reply_text('Привет! '
+                              'Я - бот, который составит для тебя рацион питания и упростит жизнь. '
+                              'Хочешь посмотреть свои подписки или создать новую?',
+                              reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                                               resize_keyboard=True))
+
+    return BotStates.GREET_USER
+
+
+def get_username(update, context):
+
+    # TODO pass if user exists
+    keyboard = [['Назад ⬅', 'Передать контакт (не жмякать, не работает)']]
+    update.message.reply_text(
+        'Познакомимся? Пожалуйста, представься. Напиши имя и фамилию',
+        reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                         resize_keyboard=True,
+                                         input_field_placeholder='Иван Иванов',
+                                         ))
 
     return BotStates.GET_USERNAME
 
@@ -50,11 +68,14 @@ def get_user_phonenumber(update, context):
     if update.message.text != 'Назад ⬅':
         context.user_data['username'] = update.message.text
 
-    phone_request_button = KeyboardButton('Передать контакт', request_contact=True)
+    phone_request_button = KeyboardButton('Передать контакт',
+                                          request_contact=True)
+
+    keyboard = [[phone_request_button, 'Назад ⬅']]
     update.message.reply_text(
         'Мне понадобится номер телефона. Можно отправить свой номер из профиля или ввести вручную',
         reply_markup=ReplyKeyboardMarkup(
-            [[phone_request_button, 'Назад ⬅']],
+            keyboard=keyboard,
             resize_keyboard=True,
             input_field_placeholder='8-999-999-9999',
         ),
@@ -164,6 +185,7 @@ def check_order(update, context):
     Предпочтения: {preferences}
     Длительность подписки: {subscription_length}
     Общая стоимость: {price}
+    Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
 
     keyboard = [['Перейти к оплате!', 'Назад ⬅']]
@@ -220,24 +242,42 @@ def done(update, context):
     return ConversationHandler.END
 
 
+def handle_subscriptions(update, context):
+    keyboard = [['Назад ⬅']]
+    text = dedent(
+        # subscription for User.subscriptions.all()
+        'Тут пока пусто, приходи позже :)'
+    )
+    update.message.reply_text(text=text,
+                              reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                                               resize_keyboard=True))
+
+    return BotStates.HANDLE_SUBSCRIPTIONS
+
+
 def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-
+            BotStates.GREET_USER: [
+                MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
+                MessageHandler(Filters.regex(r'Новая подписка$'), get_username),
+                MessageHandler(Filters.text, start)
+            ],
             BotStates.GET_USERNAME: [
                 MessageHandler(Filters.regex(r'[а-яА-Яa-zA-Z]{2,20}( )[а-яА-Яa-zA-Z]{2,20}$'),
                                get_user_phonenumber),
-                MessageHandler(Filters.text, start)
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
+                MessageHandler(Filters.text, get_username)
             ],
 
             BotStates.GET_PHONENUMBER: [
                 MessageHandler(Filters.contact, get_portion_size),
                 MessageHandler(Filters.regex(r'^\+?\d{1,3}?( |-)?\d{3}( |-)?\d{3}( |-)?\d{2}( |-)?\d{2}$'),
                                get_portion_size),
-                MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_username),
                 MessageHandler(Filters.text, get_user_phonenumber)
             ],
 
@@ -273,6 +313,10 @@ def main():
             BotStates.SUCCESS_PAYMENT: [
                 MessageHandler(Filters.successful_payment, done)
             ],
+            BotStates.HANDLE_SUBSCRIPTIONS: [
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
+                MessageHandler(Filters.text, start)
+            ]
 
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
