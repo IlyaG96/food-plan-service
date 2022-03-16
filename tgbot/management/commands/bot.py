@@ -28,13 +28,25 @@ class BotStates(Enum):
     GET_PHONENUMBER = 3
     GET_PORTIONS_SIZE = 4
     GET_PREFERENCES = 5
-    GET_PORTIONS_QUANTITY = 6
-    GET_SUBSCRIPTION_LENGTH = 7
-    CHECK_ORDER = 8
-    TAKE_PAYMENT = 9
-    PRECHECKOUT = 10
-    SUCCESS_PAYMENT = 11
-    HANDLE_SUBSCRIPTIONS = 12
+    GET_ALLERGY = 6
+    GET_PORTIONS_QUANTITY = 7
+    GET_SUBSCRIPTION_LENGTH = 8
+    CHECK_ORDER = 9
+    TAKE_PAYMENT = 10
+    PRECHECKOUT = 11
+    SUCCESS_PAYMENT = 12
+    HANDLE_SUBSCRIPTIONS = 13
+
+
+def build_menu(buttons, n_cols,
+               header_buttons=None,
+               footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, header_buttons)
+    if footer_buttons:
+        menu.append(footer_buttons)
+    return menu
 
 
 def start(update, context):
@@ -50,9 +62,8 @@ def start(update, context):
 
 
 def get_username(update, context):
-
     # TODO pass if user exists
-    keyboard = [['Назад ⬅', 'Передать контакт (не жмякать, не работает)']]
+    keyboard = [['Передать контакт (не жмякать, не работает)']]
     update.message.reply_text(
         'Познакомимся? Пожалуйста, представься. Напиши имя и фамилию',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
@@ -64,7 +75,6 @@ def get_username(update, context):
 
 
 def get_user_phonenumber(update, context):
-
     if update.message.text != 'Назад ⬅':
         context.user_data['username'] = update.message.text
 
@@ -85,7 +95,6 @@ def get_user_phonenumber(update, context):
 
 
 def get_portion_size(update, context):
-
     if update.message.text != 'Назад ⬅':
         if update.message.contact:
             phone_number = update.message.contact.phone_number
@@ -94,7 +103,9 @@ def get_portion_size(update, context):
         context.user_data['phonenumber'] = phone_number
 
     # TODO replace from db
-    keyboard = [[str(num) for num in range(1, 11)], ['Назад ⬅']]
+    keyboard = build_menu([str(num) for num in range(1, 11)],
+                          n_cols=5,
+                          footer_buttons=['Назад ⬅'])
     update.message.reply_text(
         'На какое количество человек рассчитывать блюдо?',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
@@ -109,12 +120,14 @@ def get_preferences(update, context):
         portion_size = update.message.text
         context.user_data['portion_size'] = portion_size
 
-    keyboard = [['Мясоед',
-                 'Предпочитаю рыбов',
-                 'Убежденный веган',
-                 'Всего и побольше',
-                 'Низкокалорийная диета',
-                 ], ['Назад ⬅']]
+    keyboard = build_menu(['Мясоед',
+                           'Предпочитаю рыбов',
+                           'Убежденный веган',
+                           'Всего и побольше',
+                           'Низкокалорийная диета',
+                           ], n_cols=2,
+                          footer_buttons=['Назад ⬅']
+                          )
     # TODO replace from db
     # TODO если какая-то низкокалорийная диета, то можно добавить выбор блюд по калориям. Но это уже к фичам,
     #  наверное
@@ -128,14 +141,43 @@ def get_preferences(update, context):
     return BotStates.GET_PREFERENCES
 
 
-def get_portions_quantity(update, context):
+def get_allergy(update, context):
+
     if update.message.text != 'Назад ⬅':
         preferences = update.message.text
         context.user_data['preferences'] = preferences
-        # TODO replace from db
-    keyboard = [[str(num) for num in range(1, 11)], ['Назад ⬅']]
+    keyboard = build_menu(['Рыба и морепродукты',
+                           'Мясо',
+                           'Зерновые',
+                           'Продукты пчеловодства',
+                           'Орехи и бобовые',
+                           'Молочные продукты'
+                           ], n_cols=2,
+                          footer_buttons=['Назад ⬅']
+                          )
+    # TODO replace from db
+    # TODO если какая-то низкокалорийная диета, то можно добавить выбор блюд по калориям. Но это уже к фичам,
+    #  наверное
     update.message.reply_text(
-        'Сколько порций потребуется?',
+        'От чего в рационе хотелось бы отказаться??',
+        reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                         resize_keyboard=True,
+                                         ),
+    )
+
+    return BotStates.GET_ALLERGY
+
+
+def get_portions_quantity(update, context):
+    if update.message.text != 'Назад ⬅':
+        allergy = update.message.text
+        context.user_data['allergy'] = allergy
+        # TODO replace from db
+    keyboard = build_menu([str(num) for num in range(1, 11)],
+                          n_cols=5,
+                          footer_buttons=['Назад ⬅'])
+    update.message.reply_text(
+        'Сколько приемов пищи в день планируется?',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
                                          resize_keyboard=True,
                                          ),
@@ -149,7 +191,7 @@ def get_subscription_length(update, context):
         portions_quantity = update.message.text
         context.user_data['portions_quantity'] = portions_quantity
         # TODO replace from db
-    keyboard = [[str(num) for num in range(1, 13)], ['Назад ⬅']]
+    keyboard = build_menu(['1', '3', '6', '9', '12'], n_cols=3, footer_buttons=['Назад ⬅'])
     update.message.reply_text(
         'На сколько месяцев оформить подписку?',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
@@ -168,10 +210,11 @@ def check_order(update, context):
     phonenumber = context.user_data['phonenumber']
     portions_quantity = context.user_data['portions_quantity']
     portion_size = context.user_data['portion_size']
+    allergy = context.user_data['allergy']
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
 
-    price = int(portions_quantity)*int(portion_size)*int(subscription_length)
+    price = int(portions_quantity) * int(portion_size) * int(subscription_length)
     # in test payment price should be less than 1000 rub!
     context.user_data['price'] = price
 
@@ -180,9 +223,10 @@ def check_order(update, context):
         f'''
     Имя: {username}
     Номер телефона: {phonenumber}
-    Количество порций: {portions_quantity}
-    Размер порций: {portion_size}
+    Количество приемов пищи в день: {portions_quantity}
+    Размер блюда рассчитан на: {portion_size} человек
     Предпочтения: {preferences}
+    Аллергия: {allergy}
     Длительность подписки: {subscription_length}
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
@@ -200,7 +244,6 @@ def check_order(update, context):
 
 
 def take_payment(update, context):
-
     price = context.user_data['price']
 
     update.message.reply_text('Формирую счёт...',
@@ -259,12 +302,12 @@ def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler('start', get_username)],
         states={
             BotStates.GREET_USER: [
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
                 MessageHandler(Filters.regex(r'Новая подписка$'), get_username),
-                MessageHandler(Filters.text, start)
+                MessageHandler(Filters.text, get_username)
             ],
             BotStates.GET_USERNAME: [
                 MessageHandler(Filters.regex(r'[а-яА-Яa-zA-Z]{2,20}( )[а-яА-Яa-zA-Z]{2,20}$'),
@@ -288,13 +331,18 @@ def main():
             ],
 
             BotStates.GET_PREFERENCES: [
-                MessageHandler(Filters.regex(r'[а-яА-Я ]{2,20}$'), get_portions_quantity),
+                MessageHandler(Filters.regex(r'[а-яА-Я ]{2,30}$'), get_allergy),
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), get_portion_size),
                 MessageHandler(Filters.text, get_preferences)
             ],
+            BotStates.GET_ALLERGY: [
+                MessageHandler(Filters.regex(r'[а-яА-Я ]{2,20}$'), get_portions_quantity),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
+                MessageHandler(Filters.text, get_allergy)
+            ],
             BotStates.GET_PORTIONS_QUANTITY: [
                 MessageHandler(Filters.regex(r'[0-9]{1,2}$'), get_subscription_length),
-                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_allergy),
                 MessageHandler(Filters.text, get_portions_quantity)
             ],
             BotStates.GET_SUBSCRIPTION_LENGTH: [
