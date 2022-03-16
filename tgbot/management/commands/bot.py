@@ -2,6 +2,7 @@ from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from telegram import (
+    LabeledPrice,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     InlineKeyboardMarkup,
@@ -9,8 +10,15 @@ from telegram import (
     KeyboardButton,
     message
 )
-from telegram.ext import (CallbackContext, CallbackQueryHandler, CommandHandler, ConversationHandler,
-                          Filters, MessageHandler, Updater)
+from telegram.ext import (CallbackContext,
+                          CallbackQueryHandler,
+                          CommandHandler,
+                          ConversationHandler,
+                          PreCheckoutQueryHandler,
+                          Filters,
+                          MessageHandler,
+                          Updater)
+
 from textwrap import dedent
 
 
@@ -22,8 +30,10 @@ class BotStates(Enum):
     GET_PREFERENCES = 5
     GET_PORTIONS_QUANTITY = 6
     GET_SUBSCRIPTION_LENGTH = 7
-    TAKE_PAYMENT = 8
-    CHECK_PAYMENT = 9
+    CHECK_ORDER = 8
+    TAKE_PAYMENT = 9
+    PRECHECKOUT = 10
+    SUCCESS_PAYMENT = 11
 
 
 def start(update, context):
@@ -135,19 +145,21 @@ def check_order(update, context):
 
     username = context.user_data['username']
     phonenumber = context.user_data['phonenumber']
-    quantity = context.user_data['quantity']
-    portions_size = context.user_data['portions_size']
+    portions_quantity = context.user_data['portions_quantity']
+    portion_size = context.user_data['portion_size']
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
 
-    price = int(quantity)*int(portions_size)*int(subscription_length)*10
+    price = int(portions_quantity)*int(portion_size)*int(subscription_length)*10
+    context.user_data['price'] = price
+
     # TODO get price from DB
     order = dedent(
         f'''
     Имя: {username}
     Номер телефона: {phonenumber}
-    Количество порций: {quantity}
-    Размер порций: {portions_size}
+    Количество порций: {portions_quantity}
+    Размер порций: {portion_size}
     Предпочтения: {preferences}
     Длительность подписки: {subscription_length}
     Общая стоимость: {price}
@@ -160,6 +172,40 @@ def check_order(update, context):
                                          resize_keyboard=True,
                                          ),
     )
+
+    return BotStates.CHECK_ORDER
+
+
+def take_payment(update, context):
+
+    price = context.user_data['price']
+
+    update.message.reply_text('Формирую счёт...',
+                              reply_markup=ReplyKeyboardRemove())
+    provider_token = settings.PROVIDER_TOKEN
+    chat_id = update.message.chat_id
+    title = 'Ваш заказ'
+    description = f'Оплата вашего заказа стоимостью {price} рублей'
+    payload = 'Custom-Payload'
+
+    currency = 'RUB'
+    prices = [LabeledPrice("Стоимость", price * 100)]
+
+    context.bot.send_invoice(
+        chat_id, title, description, payload, provider_token, currency, prices
+    )
+
+    return BotStates.PRECHECKOUT
+
+
+def precheckout(update, _):
+    query = update.pre_checkout_query
+    if query.invoice_payload != 'Custom-Payload':
+        query.answer(ok=False, error_message="Что-то пошло не так...")
+    else:
+        query.answer(ok=True)
+
+    return BotStates.SUCCESS_PAYMENT
 
 
 def done(update, context):
@@ -200,15 +246,30 @@ def main():
             ],
 
             BotStates.GET_PREFERENCES: [
-                MessageHandler(Filters.regex(r'[а-яА-Я]{2,15}$'), get_subscription_length),
+                MessageHandler(Filters.regex(r'[а-яА-Я ]{2,20}$'), get_portions_quantity),
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), get_portion_size),
                 MessageHandler(Filters.text, get_preferences)
             ],
-
+            BotStates.GET_PORTIONS_QUANTITY: [
+                MessageHandler(Filters.regex(r'[0-9]{1,2}$'), get_subscription_length),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
+                MessageHandler(Filters.text, get_portions_quantity)
+            ],
             BotStates.GET_SUBSCRIPTION_LENGTH: [
                 MessageHandler(Filters.regex(r'[0-9]{1,2}$'), check_order),
-                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_portions_quantity),
                 MessageHandler(Filters.text, get_subscription_length)
+            ],
+            BotStates.CHECK_ORDER: [
+                MessageHandler(Filters.regex(r'Перейти к оплате!$'), take_payment),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_subscription_length),
+                MessageHandler(Filters.text, check_order)
+            ],
+            BotStates.PRECHECKOUT: [
+                PreCheckoutQueryHandler(precheckout),
+            ],
+            BotStates.SUCCESS_PAYMENT: [
+                MessageHandler(Filters.successful_payment, done)
             ],
 
         },
