@@ -4,9 +4,23 @@ from django.db import models
 class Preference(models.Model):
     title = models.CharField('Предпочтения', max_length=200)
 
+    def __str__(self):
+        return f'{self.title}'
+
+    class Meta:
+        verbose_name = 'Предпочтение'
+        verbose_name_plural = 'Предпочтения'
+
 
 class Allergy(models.Model):
     title = models.CharField('Аллергия', max_length=200)
+
+    def __str__(self):
+        return f'{self.title}'
+
+    class Meta:
+        verbose_name = 'Аллергия'
+        verbose_name_plural = 'Аллергии'
 
 
 class User(models.Model):
@@ -55,8 +69,8 @@ class Subscribe(models.Model):
         return f'Подписка {self.pk} - {self.title}'
 
     class Meta:
-        verbose_name = 'Подписчик'
-        verbose_name_plural = 'Подписчики'
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
 
 
 class Product(models.Model):
