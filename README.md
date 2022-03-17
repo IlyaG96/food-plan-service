@@ -22,6 +22,12 @@ PROVIDER_TOKEN=<token>
 ```
 python manage.py bot
 ```
+## Запуск парсера
+Для запуска парсера введите
+```
+python manage.py parser
+```
+Добавит около 60 блюд, кому подходит и кому не подходит выбирает случайно.
 
 ## Редактирование бота
 Код бота располагается в `/tgbot/management/commands/bot.py`
