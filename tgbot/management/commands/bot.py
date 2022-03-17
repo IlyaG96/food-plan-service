@@ -18,7 +18,7 @@ from telegram.ext import (CallbackContext,
                           Filters,
                           MessageHandler,
                           Updater)
-from tgbot.models import User                        
+from tgbot.models import User, Allergy, Preference
 
 from textwrap import dedent
 
@@ -135,18 +135,10 @@ def get_preferences(update, context):
     if update.message.text != 'Назад ⬅':
         portion_size = update.message.text
         context.user_data['portion_size'] = portion_size
-
-    keyboard = build_menu(['Мясоед',
-                           'Предпочитаю рыбов',
-                           'Убежденный веган',
-                           'Всего и побольше',
-                           'Низкокалорийная диета',
-                           ], n_cols=2,
-                          footer_buttons=['Назад ⬅']
-                          )
-    # TODO replace from db
-    # TODO если какая-то низкокалорийная диета, то можно добавить выбор блюд по калориям. Но это уже к фичам,
-    #  наверное
+    preferences = Preference.objects.all()
+    keyboard = build_menu([preference.title for preference in preferences],
+                          n_cols=2,
+                          footer_buttons=['Назад ⬅'])
     update.message.reply_text(
         'Есть какие-то предпочтения по диете?',
         reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
@@ -169,13 +161,10 @@ def get_allergy(update, context):
                                          resize_keyboard=True,
                                          ),
     )
-    context.user_data['allergens'] = ['Рыба и морепродукты \U0001F7E2',
-                                      'Мясо \U0001F7E2',
-                                      'Зерновые \U0001F7E2',
-                                      'Продукты пчеловодства \U0001F7E2',
-                                      'Орехи и бобовые \U0001F7E2',
-                                      'Молочные продукты \U0001F7E2']
 
+    allergens = Allergy.objects.all()
+    context.user_data['allergens'] = [
+        allergen.title + ' \U0001F7E2' for allergen in allergens]
     allergens = context.user_data['allergens']
 
     context.bot.send_message(
@@ -195,8 +184,6 @@ def handle_allergy(update, context):
     allergens = context.user_data['allergens']
     callback_query = update.callback_query
     choice = callback_query.data
-    print(choice)
-    print(1)
     if choice in allergens and '\U0000274C' in choice:
         allergen_index = allergens.index(choice)
         allergens[allergen_index] = choice.replace('\U0000274C', '\U0001F7E2')
