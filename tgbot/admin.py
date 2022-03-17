@@ -25,4 +25,3 @@ class User(admin.ModelAdmin):
 @admin.register(Subscribe)
 class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
-

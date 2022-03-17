@@ -37,43 +37,6 @@ class User(models.Model):
         verbose_name_plural = 'Подписчики'
 
 
-class Subscribe(models.Model):
-    title = models.CharField('Название', max_length=200)
-    subscriber = models.ForeignKey(
-        User,
-        verbose_name='Пользователь',
-        related_name='subscribes',
-        on_delete=models.CASCADE,
-    )
-    preference = models.ForeignKey(
-        Preference,
-        verbose_name='Предпочтения',
-        related_name='subscribes',
-        on_delete=models.CASCADE,
-    )
-    allergy = models.ManyToManyField(
-        Allergy,
-        verbose_name='Аллергии',
-        related_name='subscribes',
-        blank=True
-    )
-    number_of_meals = models.PositiveSmallIntegerField(
-        'Количество приемов пищи в день',
-    )
-    subscription_period = models.DateField(
-        'Срок действия подписки',
-        blank=True,
-        null=True,
-    )
-
-    def __str__(self):
-        return f'Подписка {self.pk} - {self.title} - {self.subscriber.first_name}'
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-
-
 class Product(models.Model):
     title = models.CharField('Название продукта', max_length=200)
 
@@ -123,3 +86,54 @@ class Dish(models.Model):
     class Meta:
         verbose_name = 'Блюдо'
         verbose_name_plural = 'Блюда'
+
+
+class Subscribe(models.Model):
+    title = models.CharField('Название', max_length=200)
+    subscriber = models.ForeignKey(
+        User,
+        verbose_name='Пользователь',
+        related_name='subscribes',
+        on_delete=models.CASCADE,
+    )
+    preference = models.ForeignKey(
+        Preference,
+        verbose_name='Предпочтения',
+        related_name='subscribes',
+        on_delete=models.CASCADE,
+    )
+    allergy = models.ManyToManyField(
+        Allergy,
+        verbose_name='Аллергии',
+        related_name='subscribes',
+        blank=True
+    )
+    number_of_meals = models.PositiveSmallIntegerField(
+        'Количество приемов пищи в день',
+    )
+    subscription_period = models.DateField(
+        'Срок действия подписки',
+        blank=True,
+        null=True,
+    )
+    dish = models.ManyToManyField(
+        Dish,
+        verbose_name='Блюда',
+        related_name='dishes'
+    )
+
+    def __str__(self):
+        return f'Подписка {self.pk} - {self.title} - {self.subscriber.first_name}'
+
+    def select_available_dishes(self):
+        allergens = [allergy for allergy in self.allergy.all()]
+        preference = self.preference
+        dishes = Dish.objects.filter(preferences=preference).exclude(allergy__in=allergens)
+        self.dishes = dishes
+
+        return self.dishes
+
+
+class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
