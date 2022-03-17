@@ -148,3 +148,34 @@ class Subscribe(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+
+class Bill(models.Model):
+
+    price = models.IntegerField(
+        'Стоимость заказа',
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name='Чек пользователя',
+        related_name='user',
+        on_delete=models.CASCADE
+    )
+    subscription = models.ForeignKey(
+        Subscribe,
+        verbose_name='Относится к подписке',
+        related_name='subscription',
+        on_delete=models.CASCADE
+    )
+    creation_date = models.DateTimeField(
+        'Дата создания заказа',
+        db_index=True
+    )
+
+    def __str__(self):
+        return f'Чек пользователя {self.user.first_name}'
+
+    class Meta:
+        verbose_name = 'Чек'
+        verbose_name_plural = 'Чеки'

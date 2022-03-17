@@ -1,11 +1,12 @@
 from django.contrib import admin
 
-from .models import Dish, Product, Subscribe, User, Preference, Allergy
+from .models import Dish, Product, Subscribe, User, Preference, Allergy, Bill
 
 admin.site.register(Product)
 admin.site.register(Preference)
 admin.site.register(Allergy)
 admin.site.register(Dish)
+admin.site.register(Bill)
 
 
 class SubscriptionAdmin(admin.StackedInline):
