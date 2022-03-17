@@ -1,12 +1,35 @@
 from django.contrib import admin
-
 from .models import Dish, Product, Subscribe, User, Preference, Allergy, Bill
 
 admin.site.register(Product)
 admin.site.register(Preference)
 admin.site.register(Allergy)
 admin.site.register(Dish)
-admin.site.register(Bill)
+
+
+@admin.register(Bill)
+class BillAdmin(admin.ModelAdmin):
+
+    raw_id_fields = ('user', 'subscription')
+    list_display = ['user', 'subscription_length', 'price', 'creation_date', 'total_amount']
+
+    def subscription_length(self, obj):
+        return obj.subscription.subscription_period
+
+    subscription_length.short_description = 'Конец подписки'
+    # TODO use annotate in QuerySet
+
+    def total_amount(self, obj):
+
+        bills = Bill.objects.all()
+        total_amount = sum([bill.price for bill in bills])
+        return total_amount
+
+    total_amount.short_description = 'Общая сумма'
+
+
+    class Meta:
+        model = Bill
 
 
 class SubscriptionAdmin(admin.StackedInline):
