@@ -8,10 +8,8 @@ from telegram import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     KeyboardButton,
-    message
 )
-from telegram.ext import (CallbackContext,
-                          CallbackQueryHandler,
+from telegram.ext import (CallbackQueryHandler,
                           CommandHandler,
                           ConversationHandler,
                           PreCheckoutQueryHandler,
@@ -266,7 +264,7 @@ def check_order(update, context):
     Размер блюда рассчитан на: {portion_size} человек
     Предпочтения: {preferences}
     Исключения из рациона: {allergens}
-    Длительность подписки: {subscription_length}
+    Длительность подписки: {subscription_length} месяца
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
@@ -294,7 +292,7 @@ def take_payment(update, context):
     payload = 'Custom-Payload'
 
     currency = 'RUB'
-    prices = [LabeledPrice("Стоимость", price * 100)]
+    prices = [LabeledPrice('Стоимость', price * 100)]
 
     context.bot.send_invoice(
         chat_id, title, description, payload, provider_token, currency, prices
@@ -306,7 +304,7 @@ def take_payment(update, context):
 def precheckout(update, _):
     query = update.pre_checkout_query
     if query.invoice_payload != 'Custom-Payload':
-        query.answer(ok=False, error_message="Что-то пошло не так...")
+        query.answer(ok=False, error_message='Что-то пошло не так...')
     else:
         query.answer(ok=True)
 
@@ -314,7 +312,6 @@ def precheckout(update, _):
 
 
 def done(update, context):
-    """End conversation."""
 
     update.message.reply_text(
         'До свидания!',
