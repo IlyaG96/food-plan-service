@@ -119,7 +119,8 @@ class Subscribe(models.Model):
     dish = models.ManyToManyField(
         Dish,
         verbose_name='Блюда',
-        related_name='dishes'
+        related_name='dishes',
+        blank=True
     )
 
     def __str__(self):
@@ -133,7 +134,6 @@ class Subscribe(models.Model):
 
         return self.dishes
 
-
-class Meta:
+    class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
