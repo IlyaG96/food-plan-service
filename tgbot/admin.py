@@ -17,6 +17,7 @@ class User(admin.ModelAdmin):
     inlines = [
         SubscriptionAdmin
     ]
+    filter_horizontal = ('favorite_dishes', 'unloved_dishes')
 
     class Meta:
         model = User
@@ -26,7 +27,7 @@ class User(admin.ModelAdmin):
 class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
     readonly_fields = ('allowed_dishes',)
-
+    filter_horizontal = ('allergy',)
     fieldsets = (
         ('Общее', {
             'fields': [
