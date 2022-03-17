@@ -163,18 +163,18 @@ def get_allergy(update, context):
         context.user_data['preferences'] = preferences
 
     update.message.reply_text(
-        'Выбери продукты, на которые у тебя аллергия. Как только закончишь, нажимай "Готово", '
+        'Пометь крестиком \U0000274C те продукты, на которые у тебя аллергия. Как только закончишь, нажимай "Готово", '
         'Если аллергии нет, можно нажать "Пропустить"',
         reply_markup=ReplyKeyboardMarkup(keyboard=[['Пропустить', 'Готово']],
                                          resize_keyboard=True,
                                          ),
     )
-    context.user_data['allergens'] = ['Рыба и морепродукты',
-                                      'Мясо',
-                                      'Зерновые',
-                                      'Продукты пчеловодства',
-                                      'Орехи и бобовые',
-                                      'Молочные продукты']
+    context.user_data['allergens'] = ['Рыба и морепродукты \U0001F7E2',
+                                      'Мясо \U0001F7E2',
+                                      'Зерновые \U0001F7E2',
+                                      'Продукты пчеловодства \U0001F7E2',
+                                      'Орехи и бобовые \U0001F7E2',
+                                      'Молочные продукты \U0001F7E2']
 
     allergens = context.user_data['allergens']
 
@@ -193,15 +193,16 @@ def get_allergy(update, context):
 
 def handle_allergy(update, context):
     allergens = context.user_data['allergens']
-
     callback_query = update.callback_query
     choice = callback_query.data
-    if choice in allergens and '**' in choice:
+    print(choice)
+    print(1)
+    if choice in allergens and '\U0000274C' in choice:
         allergen_index = allergens.index(choice)
-        allergens[allergen_index] = choice.replace('**', "")
+        allergens[allergen_index] = choice.replace('\U0000274C', '\U0001F7E2')
     if choice in allergens:
         allergen_index = allergens.index(choice)
-        allergens[allergen_index] = choice + '**'
+        allergens[allergen_index] = choice.replace('\U0001F7E2', '\U0000274C')
 
     context.bot.edit_message_text(
         text='У меня аллергия на:',
@@ -259,9 +260,9 @@ def check_order(update, context):
     portion_size = context.user_data['portion_size']
     allergens = context.user_data['allergens']
     if not allergens:
-        allergens = 'отсутствует'
+        allergens = 'отсутствуют'
     else:
-        allergens = list(filter(lambda word: '**' in word, allergens))
+        allergens = list(filter(lambda word: '\U0000274C' in word, allergens))
 
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
@@ -277,7 +278,7 @@ def check_order(update, context):
     Количество приемов пищи в день: {portions_quantity}
     Размер блюда рассчитан на: {portion_size} человек
     Предпочтения: {preferences}
-    Аллергия: {allergens}
+    Исключения из рациона: {allergens}
     Длительность подписки: {subscription_length}
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
@@ -393,7 +394,7 @@ def main():
                 MessageHandler(Filters.text, get_allergy)
             ],
             BotStates.HANDLE_ALLERGY: [
-                CallbackQueryHandler(handle_allergy, pattern='[а-яА-Я* ]{2,30}$'),
+                CallbackQueryHandler(handle_allergy, pattern='[а-яА-Я\U0000274C\U0001F7E2 ]{2,30}$'),
                 CallbackQueryHandler(get_portions_quantity, pattern='^Готово$'),
                 MessageHandler(Filters.regex(r'^Пропустить$'), get_portions_quantity),
                 MessageHandler(Filters.regex(r'^Готово'), get_portions_quantity),
