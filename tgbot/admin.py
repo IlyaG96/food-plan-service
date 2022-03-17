@@ -27,6 +27,18 @@ class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
     readonly_fields = ('allowed_dishes',)
 
+    fieldsets = (
+        ('Общее', {
+            'fields': [
+                'subscriber',
+                'preference',
+                'allergy',
+                'allowed_dishes',
+                'subscription_period',
+            ]
+        }),
+    )
+
     def allowed_dishes(self, obj):
         return ", ".join([dish.title for dish in obj.select_available_dishes()])
 
