@@ -12,6 +12,8 @@ class BillAdmin(admin.ModelAdmin):
 
     raw_id_fields = ('user', 'subscription')
     list_display = ['user', 'subscription_length', 'price', 'creation_date', 'total_amount']
+    list_filter = ['creation_date']
+    change_list_template = 'admin/bill_admin_change_list.html'
 
     def subscription_length(self, obj):
         return obj.subscription.subscription_period
