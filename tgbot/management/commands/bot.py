@@ -205,7 +205,7 @@ def get_portions_quantity(update, context):
     if update.message.text == 'Пропустить':
         context.user_data['allergens'] = None
     # TODO replace from db
-    keyboard = build_menu([str(num) for num in range(1, 11)],
+    keyboard = build_menu([str(num) for num in range(1, 7)],
                           n_cols=5,
                           footer_buttons=['Назад ⬅'])
     update.message.reply_text(
