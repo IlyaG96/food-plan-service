@@ -79,21 +79,17 @@ class User(models.Model):
     last_name = models.CharField('Фамилия', max_length=250, blank=True)
     chat_id = models.IntegerField('Chat id', unique=True)
     phone = models.CharField('Номер телефона', max_length=20, blank=True)
-    favorite_dishes = models.ForeignKey(Dish,
-                                        verbose_name='Любимые блюда',
-                                        on_delete=models.CASCADE,
-                                        related_name='favourite',
-                                        null=True,
-                                        blank=True,
-                                        default=None)
+    favorite_dishes = models.ManyToManyField(Dish,
+                                             verbose_name='Любимые блюда',
+                                             related_name='favourite',
+                                             blank=True,
+                                             default=None)
 
-    unloved_dishes = models.ForeignKey(Dish,
-                                       verbose_name='Нелюбимые блюда',
-                                       on_delete=models.CASCADE,
-                                       related_name='unloved',
-                                       null=True,
-                                       blank=True,
-                                       default=None)
+    unloved_dishes = models.ManyToManyField(Dish,
+                                            verbose_name='Нелюбимые блюда',
+                                            related_name='unloved',
+                                            blank=True,
+                                            default=None)
 
     def __str__(self):
         return f'ID: {self.chat_id} имя: {self.first_name} телефон: {self.phone}'
