@@ -68,8 +68,6 @@ def get_recipe(url):
         prod, created = Product.objects.get_or_create(
             title=formatted_product[0])
         dish.ingredients.add(prod)
-        if created:
-            print(f'Продукт "{prod}" создан.')
         ingredients.append(product)
 
     allergies = Allergy.objects.all()
