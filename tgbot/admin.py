@@ -25,14 +25,12 @@ class User(admin.ModelAdmin):
 @admin.register(Subscribe)
 class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
-    readonly_fields = ('dishes',)
+    readonly_fields = ('allowed_dishes',)
 
-    def dishes(self, obj):
-        print(obj)
-        print()
-        return Subscribe.select_available_dishes(obj)
+    def allowed_dishes(self, obj):
+        return ", ".join([dish.title for dish in obj.select_available_dishes()])
 
-    dishes.short_description = 'Блюда'
+    allowed_dishes.short_description = 'Блюда, соответствующие условиям подписки'
 
     class Meta:
         model = Subscribe
