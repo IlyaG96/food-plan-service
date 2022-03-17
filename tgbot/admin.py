@@ -1,12 +1,11 @@
 from django.contrib import admin
 
 from .models import Dish, Product, Subscribe, User, Preference, Allergy
-# Register your models here.
 
-admin.site.register(Dish)
 admin.site.register(Product)
 admin.site.register(Preference)
 admin.site.register(Allergy)
+admin.site.register(Dish)
 
 
 class SubscriptionAdmin(admin.StackedInline):
@@ -24,5 +23,6 @@ class User(admin.ModelAdmin):
 
 
 @admin.register(Subscribe)
-class Image(admin.ModelAdmin):
-    raw_id_fields = ('subscriber', 'preference')
+class Subscribe(admin.ModelAdmin):
+    raw_id_fields = ('subscriber', 'preference', 'allergy')
+
