@@ -2,3 +2,4 @@ Django==4.0.*
 environs==9.5.*
 python-telegram-bot==13.11
 Pillow==9.0.1
+django-import-export==2.7.1
