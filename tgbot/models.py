@@ -55,6 +55,7 @@ class Subscribe(models.Model):
         Allergy,
         verbose_name='Аллергии',
         related_name='subscribes',
+        blank=True
     )
     number_of_meals = models.PositiveSmallIntegerField(
         'Количество приемов пищи в день',
@@ -66,7 +67,7 @@ class Subscribe(models.Model):
     )
 
     def __str__(self):
-        return f'Подписка {self.pk} - {self.title}'
+        return f'Подписка {self.pk} - {self.title} - {self.subscriber.first_name}'
 
     class Meta:
         verbose_name = 'Подписка'
