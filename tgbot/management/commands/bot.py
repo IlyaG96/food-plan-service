@@ -256,7 +256,6 @@ def check_order(update, context):
     # in test payment price should be less than 1000 rub!
     context.user_data['price'] = price
 
-    # TODO get price from DB
     order = dedent(
         f'''
     Имя: {username}
@@ -269,9 +268,23 @@ def check_order(update, context):
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
-    # TODO move this part to done() !
+
     user = User.objects.get(chat_id=context.user_data['user_id'])
-    subscription = Subscribe.objects.first() # first sub just for tests
+    preference = Preference.objects.get(title=preferences)
+    subscription, created = Subscribe.objects.get_or_create(
+        title='Подписка',
+        subscriber=user,
+        preference=preference,
+        number_of_meals=portions_quantity,
+        persons_quantity=portion_size,
+        sub_type=subscription_length,
+        subscription_start=timezone.now(),
+    )
+
+    # TODO find way to add allergens
+    # TODO must be in done() function on production
+
+    user = User.objects.get(chat_id=context.user_data['user_id'])
     bill = Bill.objects.create(
         user=user,
         subscription=subscription,
@@ -279,7 +292,6 @@ def check_order(update, context):
         price=context.user_data['price'],
     )
     bill.save()
-    # TODO move this part to done() !
 
     keyboard = [['Перейти к оплате!', 'Назад ⬅']]
     update.message.reply_text(
