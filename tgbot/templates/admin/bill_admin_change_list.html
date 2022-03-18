@@ -17,12 +17,12 @@
                 </th>
                 <th>
                     <div class="text">
-                        <a href="#">Количество подписок</a>
+                        <a href="#">Количество продаж за выбранный период</a>
                     </div>
                 </th>
                 <th>
                     <div class="text">
-                        <a href="#">Общая сумма покупок за выбранный период</a>
+                        <a href="#">Общая сумма продаж за выбранный период</a>
                     </div>
                 </th>
                 <th>
@@ -37,7 +37,7 @@
             <tbody>
             {% for row in summary %}
                 <tr class="{% cycle 'row1' 'row2' %}">
-                    <td> {{ row.subscription }} </td>
+                    <td> {{ row.subscription__sub_type }} мес.</td>
                     <td> {{ row.total | intcomma }} </td>
                     <td> {{ row.total_sales | default:0 | intcomma }} руб. </td>
                     <td>
@@ -57,6 +57,74 @@
 
         </table>
     </div>
+    <style>
+    .bar-chart {
+        height: 100px;
+        padding-top: 60px;
+        display: flex;
+        justify-content: space-around;
+        overflow: hidden;
+    }
+    .bar-chart .bar {
+        background-color: #79aec8;
+        flex: 100%;
+        align-self: flex-end;
+        margin-right: 2px;
+        position: relative;
+    }
+    .bar-chart .bar:last-child {
+        margin: 0;
+    }
+    .bar-chart .bar:hover {
+        background-color: #417690;
+    }
+    .bar-chart .bar .bar-tooltip {
+        user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        position: relative;
+        z-index: 999;
+    }
+    .bar-chart .bar:first-child .bar-tooltip {
+        transform: initial;
+        text-align: initial;
+        left: 0;
+    }
+    .bar-chart .bar:last-child .bar-tooltip {
+        transform: initial;
+        text-align: right;
+        right: 0;
+        left: initial;
+    }
+    .bar-chart .bar:hover .bar-tooltip {
+        opacity: 1;
+    }
+    .bar-chart .bar .bar-tooltip {
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        font-weight: bold;
+]    }
+
+    </style>
+
+    <div class="results">
+        <div class="bar-chart">
+            {% for x in summary_over_time %}
+                <div class="bar" style="height:{{x.percent| intword}}%">
+                    <div class="bar-tooltip">
+                        {{x.total | default:0 | intcomma }}<br>
+                        {{x.period | date:"d/m/Y"}}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
 {% endblock %}
 
 {% block pagination %}{% endblock %}
