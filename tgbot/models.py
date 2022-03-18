@@ -132,6 +132,12 @@ class Subscribe(models.Model):
     number_of_meals = models.PositiveSmallIntegerField(
         'Количество приемов пищи в день',
     )
+
+    persons_quantity = models.PositiveSmallIntegerField(
+        'Количество человек, на которых должна быть рассчитана порция',
+        default=1
+    )
+
     dish = models.ManyToManyField(
         Dish,
         verbose_name='Блюда',
