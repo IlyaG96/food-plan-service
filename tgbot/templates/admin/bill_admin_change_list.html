@@ -2,6 +2,10 @@
 {% block content_title %}
     <h1> Здесь будет статистика по продажам </h1>
 {% endblock %}
+{% load humanize %}
+{% load mathtags %}
+
+
 {% block result_list %}
     <div class="results">
         <table>
@@ -9,21 +13,45 @@
             <tr>
                 <th>
                     <div class="text">
-                        <a href="#">Пользователь</a>
+                        <a href="#">Польователь</a>
                     </div>
                 </th>
                 <th>
                     <div class="text">
-                        <a href="#">Стоимость подписки</a>
+                        <a href="#">Количество подписок</a>
                     </div>
                 </th>
-
+                <th>
+                    <div class="text">
+                        <a href="#">Общая сумма продаж</a>
+                    </div>
+                </th>
+                <th>
+                    <div class="text">
+                        <a href="#">
+                            <strong>% от общих продаж</strong>
+                        </a>
+                    </div>
+                </th>
             </tr>
             </thead>
             <tbody>
+            {% for row in summary %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td> {{ row.subscription }} </td>
+                    <td> {{ row.total | intcomma }} </td>
+                    <td> {{ row.total_sales | default:0 | intcomma }}$ </td>
+                    <td>
+                        <strong>
+                            {{ row.total_sales |default:0 | percentof:summary_total.total_sales }} %
+                        </strong>
+                    </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
-
+    <!-- ... -->
 {% endblock %}
+
 {% block pagination %}{% endblock %}

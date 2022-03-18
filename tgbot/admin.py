@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Dish, Product, Subscribe, User, Preference, Allergy, Bill
+from django.db import models
 
 admin.site.register(Product)
 admin.site.register(Preference)
@@ -11,24 +12,42 @@ admin.site.register(Dish)
 class BillAdmin(admin.ModelAdmin):
 
     raw_id_fields = ('user', 'subscription')
-    list_display = ['user', 'subscription_length', 'price', 'creation_date', 'total_amount']
+    list_display = ['user', 'subscription_length', 'price', 'creation_date']
     list_filter = ['creation_date']
     change_list_template = 'admin/bill_admin_change_list.html'
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(
+            request,
+            extra_context=extra_context,
+        )
+        try:
+            queryset = response.context_data['cl'].queryset
+        except (AttributeError, KeyError):
+            return response
+        metrics = {
+            'total': models.Count('id'),
+            'total_sales': models.Sum('price'),
+        }
+        response.context_data['summary'] = list(
+            queryset
+                .values('subscription')
+                .annotate(**metrics)
+                .order_by('-total_sales')
+        )
+
+        response.context_data['summary_total'] = dict(
+            queryset.aggregate(**metrics)
+        )
+
+        return response
+
+
 
     def subscription_length(self, obj):
         return obj.subscription.subscription_period
 
     subscription_length.short_description = 'Конец подписки'
-    # TODO use annotate in QuerySet
-
-    def total_amount(self, obj):
-
-        bills = Bill.objects.all()
-        total_amount = sum([bill.price for bill in bills])
-        return total_amount
-
-    total_amount.short_description = 'Общая сумма'
-
 
     class Meta:
         model = Bill
