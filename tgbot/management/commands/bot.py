@@ -1,6 +1,7 @@
 from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from telegram import (
     LabeledPrice,
     ReplyKeyboardMarkup,
@@ -16,7 +17,7 @@ from telegram.ext import (CallbackQueryHandler,
                           Filters,
                           MessageHandler,
                           Updater)
-from tgbot.models import User, Allergy, Preference
+from tgbot.models import User, Allergy, Preference, Bill, Subscribe
 
 from textwrap import dedent
 
@@ -268,6 +269,17 @@ def check_order(update, context):
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
+    # TODO move this part to done() !
+    user = User.objects.get(chat_id=context.user_data['user_id'])
+    subscription = Subscribe.objects.first() # first sub just for tests
+    bill = Bill.objects.create(
+        user=user,
+        subscription=subscription,
+        creation_date=timezone.now(),
+        price=context.user_data['price'],
+    )
+    bill.save()
+    # TODO move this part to done() !
 
     keyboard = [['Перейти к оплате!', 'Назад ⬅']]
     update.message.reply_text(
