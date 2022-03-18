@@ -347,10 +347,26 @@ def done(update, context):
 
 
 def handle_subscriptions(update, context):
+    user_id = context.user_data['user_id']
+    user = User.objects.get(chat_id=user_id)
     keyboard = [['Назад ⬅']]
+    for subscribe in user.subscribes.all():
+        title = subscribe.title
+        date = subscribe.subscription_start
+        preference = subscribe.preference
+        # allergy = subscribe.allergy
+        number_of_meals = subscribe.number_of_meals
+        persons_quantity = subscribe.persons_quantity
+        sub_type = subscribe.sub_type
+        update.message.reply_text(
+            text=f'{title} от {date}\n'
+                f'Предпочтения: {preference}\n'
+                f'Количество приемов пищи в день: {number_of_meals} приема\n'
+                f'Количество человек: {persons_quantity} человек\n'
+                f'Тип подписки: {sub_type} месяцев\n\n\n'
+        )
     text = dedent(
-        # subscriptions from User.subscriptions.all()
-        'Тут пока пусто, приходи позже :)'
+        'Ваши подписки'
     )
     update.message.reply_text(text=text,
                               reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
