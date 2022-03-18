@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now
 
 
 class Preference(models.Model):
@@ -101,6 +102,15 @@ class User(models.Model):
 
 class Subscribe(models.Model):
     title = models.CharField('Название', max_length=200)
+
+    SubscribeLengthChoices = (
+        (1, 1),
+        (3, 3),
+        (6, 6),
+        (9, 9),
+        (12, 12)
+    )
+
     subscriber = models.ForeignKey(
         User,
         verbose_name='Пользователь',
@@ -122,16 +132,25 @@ class Subscribe(models.Model):
     number_of_meals = models.PositiveSmallIntegerField(
         'Количество приемов пищи в день',
     )
-    subscription_period = models.DateField(
-        'Срок действия подписки',
-        blank=True,
-        null=True,
-    )
     dish = models.ManyToManyField(
         Dish,
         verbose_name='Блюда',
         related_name='dishes',
         blank=True
+    )
+    sub_type = models.CharField(
+        'Тип подписки',
+        choices=SubscribeLengthChoices,
+        db_index=True,
+        default=12,  # TODO в случае ошибки скрипта, пользователь автоматически получает максимальную подписку!!!
+        max_length=25,
+    )
+    subscription_start = models.DateField(
+        # TODO do not allow blank!
+        'Подписка была приобретена',
+        default=now,
+        blank=True,
+        null=True,
     )
 
     def __str__(self):

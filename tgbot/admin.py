@@ -12,7 +12,7 @@ admin.site.register(Dish)
 class BillAdmin(admin.ModelAdmin):
 
     raw_id_fields = ('user', 'subscription')
-    list_display = ['user', 'subscription_length', 'price', 'creation_date']
+    list_display = ['user', 'price', 'creation_date']
     list_filter = ['creation_date']
     change_list_template = 'admin/bill_admin_change_list.html'
 
@@ -42,13 +42,6 @@ class BillAdmin(admin.ModelAdmin):
 
         return response
 
-
-
-    def subscription_length(self, obj):
-        return obj.subscription.subscription_period
-
-    subscription_length.short_description = 'Конец подписки'
-
     class Meta:
         model = Bill
 
@@ -71,7 +64,7 @@ class User(admin.ModelAdmin):
 @admin.register(Subscribe)
 class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
-    readonly_fields = ('allowed_dishes',)
+    readonly_fields = ('allowed_dishes', 'subscription_start')
     filter_horizontal = ('allergy',)
     fieldsets = (
         ('Общее', {
@@ -80,13 +73,14 @@ class Subscribe(admin.ModelAdmin):
                 'preference',
                 'allergy',
                 'allowed_dishes',
-                'subscription_period',
+                'subscription_start',
+                'sub_type',
             ]
         }),
     )
 
     def allowed_dishes(self, obj):
-        return ", ".join([dish.title for dish in obj.select_available_dishes()])
+        return ", \n".join([dish.title for dish in obj.select_available_dishes()])
 
     allowed_dishes.short_description = 'Блюда, соответствующие условиям подписки'
 
