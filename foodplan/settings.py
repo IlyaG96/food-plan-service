@@ -32,7 +32,7 @@ SECRET_KEY = env.str('SECRET_KEY', get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', False)
 
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', ['127.0.0.1', 'localhost', 'makeshort.ru'])
 
 
 # Application definition
