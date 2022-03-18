@@ -115,7 +115,6 @@ def add_new_user(update, context):
 
 def get_portion_size(update, context):
     # if update.message.text != 'Назад ⬅':
-        
 
     # TODO replace from db
     keyboard = build_menu([str(num) for num in range(1, 11)],
@@ -432,7 +431,6 @@ def main():
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
                 MessageHandler(Filters.text, start)
             ]
-
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
         per_user=True,
