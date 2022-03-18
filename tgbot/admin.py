@@ -13,7 +13,7 @@ class BillAdmin(admin.ModelAdmin):
 
     raw_id_fields = ('user', 'subscription')
     list_display = ['user', 'price', 'creation_date']
-    list_filter = ['creation_date']
+    list_filter = ['creation_date', 'subscription__sub_type']
     change_list_template = 'admin/bill_admin_change_list.html'
 
     def changelist_view(self, request, extra_context=None):
@@ -26,7 +26,7 @@ class BillAdmin(admin.ModelAdmin):
         except (AttributeError, KeyError):
             return response
         metrics = {
-            'total': models.Count('id'),
+            'total': models.Count('subscription__sub_type'),
             'total_sales': models.Sum('price'),
         }
         response.context_data['summary'] = list(
@@ -75,6 +75,7 @@ class Subscribe(admin.ModelAdmin):
                 'allowed_dishes',
                 'subscription_start',
                 'sub_type',
+                'number_of_meals',
             ]
         }),
     )

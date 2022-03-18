@@ -5,7 +5,6 @@
 {% load humanize %}
 {% load mathtags %}
 
-
 {% block result_list %}
     <div class="results">
         <table>
@@ -13,7 +12,7 @@
             <tr>
                 <th>
                     <div class="text">
-                        <a href="#">Польователь</a>
+                        <a href="#">Подписка</a>
                     </div>
                 </th>
                 <th>
@@ -23,7 +22,7 @@
                 </th>
                 <th>
                     <div class="text">
-                        <a href="#">Общая сумма продаж</a>
+                        <a href="#">Общая сумма покупок за выбранный период</a>
                     </div>
                 </th>
                 <th>
@@ -40,7 +39,7 @@
                 <tr class="{% cycle 'row1' 'row2' %}">
                     <td> {{ row.subscription }} </td>
                     <td> {{ row.total | intcomma }} </td>
-                    <td> {{ row.total_sales | default:0 | intcomma }}$ </td>
+                    <td> {{ row.total_sales | default:0 | intcomma }} руб. </td>
                     <td>
                         <strong>
                             {{ row.total_sales |default:0 | percentof:summary_total.total_sales }} %
@@ -49,9 +48,15 @@
                 </tr>
             {% endfor %}
             </tbody>
+            <tr style="font-weight:bold; border-top:2px solid #DDDDDD;">
+                <td> Итого </td>
+                <td> {{ summary_total.total | intcomma }} </td>
+                <td> {{ summary_total.total_sales | default:0 }} руб. </td>
+                <td> 100% </td>
+            </tr>
+
         </table>
     </div>
-    <!-- ... -->
 {% endblock %}
 
 {% block pagination %}{% endblock %}

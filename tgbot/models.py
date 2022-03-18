@@ -104,11 +104,11 @@ class Subscribe(models.Model):
     title = models.CharField('Название', max_length=200)
 
     SubscribeLengthChoices = (
-        (1, 1),
-        (3, 3),
-        (6, 6),
-        (9, 9),
-        (12, 12)
+        ('1', '1'),
+        ('3', '3'),
+        ('6', '6'),
+        ('9', '9'),
+        ('12', '12')
     )
 
     subscriber = models.ForeignKey(
