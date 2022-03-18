@@ -239,21 +239,36 @@ def check_order(update, context):
         context.user_data['subscription_length'] = subscription_length
 
     user = User.objects.get(chat_id=context.user_data['user_id'])
-    username = user.first_name
+    username = ' '.join([user.first_name, user.last_name])
     phonenumber = user.phone
     portions_quantity = context.user_data['portions_quantity']
     portion_size = context.user_data['portion_size']
     allergens = context.user_data['allergens']
-    if not allergens:
-        allergens = 'отсутствуют'
-    else:
-        allergens = list(filter(lambda word: '\U0000274C' in word, allergens))
-
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
+
     price = int(portions_quantity) * int(portion_size) * int(subscription_length)
     # in test payment price should be less than 1000 rub!
     context.user_data['price'] = price
+
+    preference = Preference.objects.get(title=preferences)
+    subscription, created = Subscribe.objects.get_or_create(
+        title='Подписка',
+        subscriber=user,
+        preference=preference,
+        number_of_meals=portions_quantity,
+        persons_quantity=portion_size,
+        sub_type=subscription_length,
+        subscription_start=timezone.now(),
+    )
+
+    if allergens:
+        allergens = list(filter(lambda word: '\U0000274C' in word, allergens))
+        for allergen in allergens:
+            allergen = allergen.split(' \U0000274C')[0]
+            subscription.allergy.add(
+                Allergy.objects.get(title=allergen)
+            )
 
     order = dedent(
         f'''
@@ -268,19 +283,6 @@ def check_order(update, context):
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
 
-    user = User.objects.get(chat_id=context.user_data['user_id'])
-    preference = Preference.objects.get(title=preferences)
-    subscription, created = Subscribe.objects.get_or_create(
-        title='Подписка',
-        subscriber=user,
-        preference=preference,
-        number_of_meals=portions_quantity,
-        persons_quantity=portion_size,
-        sub_type=subscription_length,
-        subscription_start=timezone.now(),
-    )
-
-    # TODO find way to add allergens
     # TODO must be in done() function on production
 
     user = User.objects.get(chat_id=context.user_data['user_id'])
