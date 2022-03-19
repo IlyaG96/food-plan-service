@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: list dir
         run: ls
-      - name: cd to work directory
-        run: cd /home/django/code/food-plan-service
+      - name: on which PC i am?
+        run: pwd
       - name: update repo
         run: git pull
       - name: activate python
