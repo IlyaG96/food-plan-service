@@ -38,7 +38,6 @@ class BotStates(Enum):
     PRECHECKOUT = 12
     SUCCESS_PAYMENT = 13
     HANDLE_SUBSCRIPTIONS = 14
-    HANDLE_DISH = 15
 
 
 def build_menu(buttons, n_cols,
@@ -364,7 +363,6 @@ def send_notification(context):
                                       available_dishes])
                 )
 
-    return BotStates.HANDLE_DISH
 
 
 def handle_subscriptions(update, context):
