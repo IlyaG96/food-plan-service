@@ -19,7 +19,7 @@ from telegram.ext import (CallbackQueryHandler,
                           MessageHandler,
                           Updater)
 from tgbot.models import User, Allergy, Preference, Bill, Subscribe
-
+from telegram.error import BadRequest
 from textwrap import dedent
 
 
@@ -38,6 +38,7 @@ class BotStates(Enum):
     PRECHECKOUT = 12
     SUCCESS_PAYMENT = 13
     HANDLE_SUBSCRIPTIONS = 14
+    HANDLE_DISH = 15
 
 
 def build_menu(buttons, n_cols,
@@ -354,15 +355,29 @@ def send_notification(context):
             end_sub_date = subscribe.subscription_start + timezone.timedelta(days=int(subscribe.sub_type) * 30)
             if end_sub_date > timezone.now().date():
                 available_dishes = [dish for dish in Subscribe.select_available_dishes(subscribe)]
-                context.bot.send_message(
-                    chat_id=user.chat_id,
-                    text=' Время кормить себя! Кажется, в соответствии с вашей подпиской, вы можете себе позволить: ',
-                    reply_markup=InlineKeyboardMarkup
-                    (inline_keyboard=[([InlineKeyboardButton(dish.title,
-                                                             callback_data=f'{dish.id}')]) for dish in
-                                      available_dishes])
-                )
 
+                try:
+                    context.bot.send_message(
+                        chat_id=user.chat_id,
+                        text='Время кормить себя! Кажется, в соответствии с вашей подпиской, вы можете себе '
+                             'позволить: ',
+                        reply_markup=InlineKeyboardMarkup
+                        (inline_keyboard=[([InlineKeyboardButton(dish.title,
+                                                                 callback_data=f'{dish.id}')]) for dish in
+                                          available_dishes])
+                    )
+
+                except BadRequest as e:
+                    print(e)
+                    pass
+
+    return BotStates.HANDLE_DISH
+
+
+def send_dish(update, context):
+
+    callback_query = update.callback_query
+    choice = callback_query.data
 
 
 def handle_subscriptions(update, context):
@@ -474,6 +489,9 @@ def main():
             BotStates.HANDLE_SUBSCRIPTIONS: [
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
                 MessageHandler(Filters.text, start)
+            ],
+            BotStates.HANDLE_DISH: [
+                CallbackQueryHandler(send_dish, pattern='r[0-9]{1,2}$')
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
