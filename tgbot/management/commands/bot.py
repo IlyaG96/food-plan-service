@@ -337,7 +337,6 @@ def precheckout(update, _):
 
 
 def done(update, context):
-
     update.message.reply_text(
         'До свидания!',
         reply_markup=ReplyKeyboardRemove(),
@@ -350,6 +349,7 @@ def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
     keyboard = [['Назад ⬅']]
+    message = 'Ваши подписки:'
     for subscribe in user.subscribes.all():
         title = subscribe.title
         date = subscribe.subscription_start
@@ -358,17 +358,21 @@ def handle_subscriptions(update, context):
         number_of_meals = subscribe.number_of_meals
         persons_quantity = subscribe.persons_quantity
         sub_type = subscribe.sub_type
-        update.message.reply_text(
-            text=f'{title} от {date}\n'
-                f'Предпочтения: {preference}\n'
-                f'Количество приемов пищи в день: {number_of_meals} приема\n'
-                f'Количество человек: {persons_quantity} человек\n'
-                f'Тип подписки: {sub_type} месяцев\n\n\n'
-        )
-    text = dedent(
-        'Ваши подписки'
-    )
-    update.message.reply_text(text=text,
+        end_sub = date + timezone.timedelta(days=int(sub_type) * 30)
+        if end_sub > timezone.now().date():
+            subscription = dedent(
+                f'''
+            {title} от {date}\n
+            Заканчивается: {end_sub}
+            Предпочтения: {preference}
+            Количество приемов пищи в день: {number_of_meals} приема
+            Количество человек: {persons_quantity} человек
+            Подписка на: {sub_type} месяцев
+            
+            ''')
+            message += subscription
+
+    update.message.reply_text(text=message,
                               reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
                                                                resize_keyboard=True))
 
