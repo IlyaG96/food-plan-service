@@ -397,23 +397,20 @@ def handle_subscriptions(update, context):
     user = User.objects.get(chat_id=user_id)
     keyboard = [['Назад ⬅']]
     for subscribe in user.subscribes.all():
-        title = subscribe.title
         subscription_start = subscribe.subscription_start
-        preference = subscribe.preference
-        # allergy = subscribe.allergy
-        number_of_meals = subscribe.number_of_meals
-        persons_quantity = subscribe.persons_quantity
+        allergy = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
         sub_type = subscribe.sub_type
         end_sub_date = subscription_start + timezone.timedelta(days=int(sub_type) * 30)
         # TODO use 'continue' button only on subs that near to end_sub, not on active
         if end_sub_date > timezone.now().date():
             subscription = dedent(
                 f'''
-            {title} от {subscription_start}\n
+            {subscribe.title} от {subscription_start}\n
             Заканчивается: {end_sub_date}
-            Предпочтения: {preference}
-            Количество приемов пищи в день: {number_of_meals} приема
-            Количество человек: {persons_quantity} человек
+            Предпочтения: {subscribe.preference}
+            Непереносимость продуктов: {allergy}
+            Количество приемов пищи в день: {subscribe.number_of_meals} приема
+            Количество человек: {subscribe.persons_quantity} человек
             Подписка на: {sub_type} месяцев
             ''')
 
