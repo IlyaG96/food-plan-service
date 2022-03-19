@@ -38,6 +38,7 @@ class BotStates(Enum):
     PRECHECKOUT = 12
     SUCCESS_PAYMENT = 13
     HANDLE_SUBSCRIPTIONS = 14
+    HANDLE_DISH = 15
 
 
 def build_menu(buttons, n_cols,
@@ -363,6 +364,8 @@ def send_notification(context):
                                       available_dishes])
                 )
 
+    return BotStates.HANDLE_DISH
+
 
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
@@ -480,7 +483,7 @@ def main():
         per_chat=False,
         allow_reentry=True
     )
-    job_queue.run_repeating(send_notification, interval=72000.0, first=0.0)
+    job_queue.run_repeating(send_notification, interval=settings.BOT_DELAY, first=5.0)
     dispatcher.add_handler(conv_handler)
 
     updater.start_polling()

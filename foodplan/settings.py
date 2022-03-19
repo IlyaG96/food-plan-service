@@ -138,3 +138,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TGBOT_TOKEN = env.str('TGBOT_TOKEN')
 PROVIDER_TOKEN = env.str('PROVIDER_TOKEN')
+BOT_DELAY = env.int('BOT_DELAY')
