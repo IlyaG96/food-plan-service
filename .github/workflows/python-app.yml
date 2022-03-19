@@ -14,10 +14,11 @@ jobs:
         run: ls
       - name: on which PC i am?
         run: pwd
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: update repo
         run: git pull
-      - name: activate python
-        run: source env/bin/activate
       - name: migrate
         run: python manage.py makemigrations
       - name: restart apps
