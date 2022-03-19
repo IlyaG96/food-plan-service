@@ -1,8 +1,10 @@
+import random
 from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 import datetime
+from random import choices
 from telegram import (
     LabeledPrice,
     ReplyKeyboardMarkup,
@@ -349,15 +351,15 @@ def done(update, context):
 
 
 def send_notification(context):
-    # TODO dishes according to number_of_meals in Subscribe, not one, not all
     users = User.objects.all().prefetch_related('subscribes')
 
     for user in users:
-        for subscribe in user.subscribes.all()[:1]:
+        for subscribe in user.subscribes.all():
+            number_of_meals = subscribe.number_of_meals
             end_sub_date = subscribe.subscription_start + timezone.timedelta(days=int(subscribe.sub_type) * 30)
             if end_sub_date > timezone.now().date():
-                available_dishes = [dish for dish in Subscribe.select_available_dishes(subscribe)]
-
+                available_dishes = choices([dish for dish in Subscribe.select_available_dishes(subscribe)],
+                                           k=number_of_meals)
                 try:
                     context.bot.send_message(
                         chat_id=user.chat_id,
@@ -384,7 +386,7 @@ def send_dish(update, context):
     context.bot.send_message(
         chat_id=callback_query.message.chat.id,
         text=dedent(f'''
-        Для приготовления блюда "{dish.title}" вам понадобятся:'
+        Для приготовления блюда "{dish.title}" вам понадобятся:
         {dish_ingredients}
         ''')
     )
