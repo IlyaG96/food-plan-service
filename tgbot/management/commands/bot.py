@@ -17,8 +17,9 @@ from telegram.ext import (CallbackQueryHandler,
                           PreCheckoutQueryHandler,
                           Filters,
                           MessageHandler,
-                          Updater)
-from tgbot.models import User, Allergy, Preference, Bill, Subscribe
+                          Updater,
+                          JobQueue)
+from tgbot.models import User, Allergy, Preference, Bill, Subscribe, Dish
 from telegram.error import BadRequest
 from textwrap import dedent
 
@@ -348,10 +349,11 @@ def done(update, context):
 
 
 def send_notification(context):
+    # TODO dishes according to number_of_meals in Subscribe, not one, not all
     users = User.objects.all().prefetch_related('subscribes')
 
     for user in users:
-        for subscribe in user.subscribes.all():
+        for subscribe in user.subscribes.all()[:1]:
             end_sub_date = subscribe.subscription_start + timezone.timedelta(days=int(subscribe.sub_type) * 30)
             if end_sub_date > timezone.now().date():
                 available_dishes = [dish for dish in Subscribe.select_available_dishes(subscribe)]
@@ -363,7 +365,7 @@ def send_notification(context):
                              'позволить: ',
                         reply_markup=InlineKeyboardMarkup
                         (inline_keyboard=[([InlineKeyboardButton(dish.title,
-                                                                 callback_data=f'{dish.id}')]) for dish in
+                                                                 callback_data=f'{dish.id} reg')]) for dish in
                                           available_dishes])
                     )
 
@@ -371,13 +373,21 @@ def send_notification(context):
                     print(e)
                     pass
 
-    return BotStates.HANDLE_DISH
-
 
 def send_dish(update, context):
 
     callback_query = update.callback_query
-    choice = callback_query.data
+    dish_id = callback_query.data.split('reg')[0]
+    dish = Dish.objects.prefetch_related('ingredients').get(id=dish_id)
+    dish_ingredients = ''.join([ingredient.title for ingredient in dish.ingredients.all()])
+
+    context.bot.send_message(
+        chat_id=callback_query.message.chat.id,
+        text=dedent(f'''
+        Для приготовления блюда "{dish.title}" вам понадобятся:'
+        {dish_ingredients}
+        ''')
+    )
 
 
 def handle_subscriptions(update, context):
@@ -418,7 +428,7 @@ def handle_subscriptions(update, context):
 def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
-    job_queue = updater.job_queue
+    job_queue = dispatcher.job_queue
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -490,17 +500,17 @@ def main():
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
                 MessageHandler(Filters.text, start)
             ],
-            BotStates.HANDLE_DISH: [
-                CallbackQueryHandler(send_dish, pattern='r[0-9]{1,2}$')
-            ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
         per_user=True,
         per_chat=False,
         allow_reentry=True
     )
-    job_queue.run_repeating(send_notification, interval=settings.BOT_DELAY, first=5.0)
+    dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))
+
     dispatcher.add_handler(conv_handler)
+    job_queue.set_dispatcher(dispatcher)
+    job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=5.0)
 
     updater.start_polling()
 
