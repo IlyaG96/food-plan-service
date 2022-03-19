@@ -357,12 +357,13 @@ def handle_subscriptions(update, context):
         number_of_meals = subscribe.number_of_meals
         persons_quantity = subscribe.persons_quantity
         sub_type = subscribe.sub_type
-        end_sub = date + timezone.timedelta(days=int(sub_type) * 30)
-        if end_sub > timezone.now().date():
+        end_sub_date = date + timezone.timedelta(days=int(sub_type) * 30)
+        # TODO use 'continue' button only on subs that near to end_sub, not on active
+        if end_sub_date > timezone.now().date():
             subscription = dedent(
                 f'''
             {title} от {date}\n
-            Заканчивается: {end_sub}
+            Заканчивается: {end_sub_date}
             Предпочтения: {preference}
             Количество приемов пищи в день: {number_of_meals} приема
             Количество человек: {persons_quantity} человек
@@ -376,7 +377,7 @@ def handle_subscriptions(update, context):
                 (inline_keyboard=[[InlineKeyboardButton('Продлить! (В разработке)',
                                                         callback_data=f'{subscribe.id}')]]))
 
-    return BotStates.HANDLE_SUBSCRIPTIONS
+    return BotStates.GREET_USER
 
 
 def main():
