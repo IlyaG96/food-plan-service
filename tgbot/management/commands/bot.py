@@ -2,6 +2,7 @@ from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+import datetime
 from telegram import (
     LabeledPrice,
     ReplyKeyboardMarkup,
@@ -345,24 +346,42 @@ def done(update, context):
     return ConversationHandler.END
 
 
+def send_notification(context):
+    users = User.objects.all().prefetch_related('subscribes')
+
+    for user in users:
+        for subscribe in user.subscribes.all():
+            end_sub_date = subscribe.subscription_start + timezone.timedelta(days=int(subscribe.sub_type) * 30)
+            if end_sub_date > timezone.now().date():
+                available_dishes = [dish for dish in Subscribe.select_available_dishes(subscribe)]
+                context.bot.send_message(
+                    chat_id=user.chat_id,
+                    text=' Время кормить себя! Кажется, в соответствии с вашей подпиской, вы можете себе позволить: ',
+                    reply_markup=InlineKeyboardMarkup
+                    (inline_keyboard=[([InlineKeyboardButton(dish.title,
+                                                             callback_data=f'{dish.id}')]) for dish in
+                                      available_dishes])
+                )
+
+
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
     keyboard = [['Назад ⬅']]
     for subscribe in user.subscribes.all():
         title = subscribe.title
-        date = subscribe.subscription_start
+        subscription_start = subscribe.subscription_start
         preference = subscribe.preference
         # allergy = subscribe.allergy
         number_of_meals = subscribe.number_of_meals
         persons_quantity = subscribe.persons_quantity
         sub_type = subscribe.sub_type
-        end_sub_date = date + timezone.timedelta(days=int(sub_type) * 30)
+        end_sub_date = subscription_start + timezone.timedelta(days=int(sub_type) * 30)
         # TODO use 'continue' button only on subs that near to end_sub, not on active
         if end_sub_date > timezone.now().date():
             subscription = dedent(
                 f'''
-            {title} от {date}\n
+            {title} от {subscription_start}\n
             Заканчивается: {end_sub_date}
             Предпочтения: {preference}
             Количество приемов пищи в день: {number_of_meals} приема
@@ -383,6 +402,7 @@ def handle_subscriptions(update, context):
 def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
+    job_queue = updater.job_queue
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -460,7 +480,7 @@ def main():
         per_chat=False,
         allow_reentry=True
     )
-
+    job_queue.run_repeating(send_notification, interval=72000.0, first=0.0)
     dispatcher.add_handler(conv_handler)
 
     updater.start_polling()
