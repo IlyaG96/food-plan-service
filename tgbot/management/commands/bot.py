@@ -349,7 +349,6 @@ def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
     keyboard = [['Назад ⬅']]
-    message = 'Ваши подписки:'
     for subscribe in user.subscribes.all():
         title = subscribe.title
         date = subscribe.subscription_start
@@ -368,13 +367,14 @@ def handle_subscriptions(update, context):
             Количество приемов пищи в день: {number_of_meals} приема
             Количество человек: {persons_quantity} человек
             Подписка на: {sub_type} месяцев
-            
             ''')
-            message += subscription
 
-    update.message.reply_text(text=message,
-                              reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
-                                                               resize_keyboard=True))
+            context.bot.send_message(
+                text=subscription,
+                chat_id=context.user_data['user_id'],
+                reply_markup=InlineKeyboardMarkup
+                (inline_keyboard=[[InlineKeyboardButton('Продлить! (В разработке)',
+                                                        callback_data=f'{subscribe.id}')]]))
 
     return BotStates.HANDLE_SUBSCRIPTIONS
 
