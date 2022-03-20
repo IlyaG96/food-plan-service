@@ -15,10 +15,10 @@ jobs:
           username: ${{secrets.SSH_USERNAME}}
       - name: updat_deploy
         script: |
-        cd /home/django/code/food-plan-service
-        git pull
-        source env/bin/activate
-        python manage.py migrate
-        sudo systemctl restart food.socket food.service foodbot.service
+          cd /home/django/code/food-plan-service
+          git pull
+          source env/bin/activate
+          python manage.py migrate
+          sudo systemctl restart food.socket food.service foodbot.service
         echo: successful deployment
 
