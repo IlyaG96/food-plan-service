@@ -30,7 +30,7 @@ def _update_database():
 
 
 def _reload_services():
-    run('sudo systemctl food.socket food.service foodbot.service')
+    run('sudo systemctl restart food.socket food.service foodbot.service')
 
 
 def _daemon_reload():
