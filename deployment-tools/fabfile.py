@@ -10,8 +10,6 @@ def deploy():
     run(f'mkdir -p {site_folder}')
     with cd(site_folder):
         _get_latest_source()
-        _update_virtualenv()
-        _update_static_files()
         _update_database()
         _reload_services()
         _daemon_reload()
@@ -25,16 +23,6 @@ def _get_latest_source():
         run(f'git clone {REPO_URL} .')
     current_commit = local("git log -n 1 --format=%H", capture=True)
     run(f'git reset --hard {current_commit}')
-
-
-def _update_virtualenv():
-    if not exists('env/bin/pip'):
-        run(f'python3 -m venv env')
-    run('./env/bin/pip install -r requirements.txt')
-
-
-def _update_static_files():
-    run('./env/bin/python manage.py collectstatic --noinput')
 
 
 def _update_database():
