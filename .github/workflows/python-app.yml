@@ -4,23 +4,21 @@ on:
   push:
 
 jobs:
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-      - name: list dir
-        run: ls
-      - name: on which PC i am?
-        run: pwd
-      - uses: actions/setup-python@v2
+      - name: login
+        uses: appleboy/ssh-action@0.1.2
         with:
-          python-version: 3.9
-      - name: update repo
-        run: git pull
-      - name: migrate
-        run: python manage.py makemigrations
-      - name: restart apps
-        run: sudo systemctl restart food.socket food.service foodbot.service
+          host: ${{secrets.SSH_HOST}}
+          key: ${{secrets.SSH_KEY}}
+          username: ${{secrets.SSH_USERNAME}}
+      - name: updat_deploy
+        script: |
+        cd /home/django/code/food-plan-service
+        git pull
+        source env/bin/activate
+        python manage.py migrate
+        sudo systemctl restart food.socket food.service foodbot.service
+        echo: successful deployment
 
