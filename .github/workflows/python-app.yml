@@ -13,14 +13,12 @@ jobs:
           host: ${{secrets.SSH_HOST}}
           key: ${{secrets.SSH_KEY}}
           username: ${{secrets.SSH_USERNAME}}
-      - name: list dir
-        run: ls
-      - name: go home
-        run: cd ~/
-      - name: list dir again
-        run: ls
-      - name: pull changes
-        run: git pull
+      - name: make dir tests
+        run: mkdir tests
+      - name: go to tests dir
+        run: cd tests
+      - name: clone repo
+        run: git clone git@github.com:IlyaG96/food-plan-service.git
       - name: activate python
         run:  source env/bin/activate
       - name: migrate
