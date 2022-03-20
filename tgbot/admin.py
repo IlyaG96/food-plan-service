@@ -28,17 +28,6 @@ class BillAdmin(admin.ModelAdmin):
     change_list_template = 'admin/bill_admin_change_list.html'
     date_hierarchy = 'creation_date'
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return True
-
-    def has_module_permission(self, request):
-        return True
 
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(

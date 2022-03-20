@@ -512,7 +512,7 @@ def main():
         per_chat=False,
         allow_reentry=True
     )
-    dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))
+    dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))  # TODO fix this
 
     dispatcher.add_handler(conv_handler)
     job_queue.set_dispatcher(dispatcher)
