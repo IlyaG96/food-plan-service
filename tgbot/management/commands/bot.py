@@ -1,10 +1,8 @@
-import random
 import pathlib
 from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-import datetime
 from random import choices
 from telegram import (
     LabeledPrice,
@@ -20,8 +18,7 @@ from telegram.ext import (CallbackQueryHandler,
                           PreCheckoutQueryHandler,
                           Filters,
                           MessageHandler,
-                          Updater,
-                          JobQueue)
+                          Updater,)
 from tgbot.models import User, Allergy, Preference, Bill, Subscribe, Dish
 from telegram.error import BadRequest
 from textwrap import dedent
