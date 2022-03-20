@@ -399,34 +399,43 @@ def send_dish(update, context):
     )
 
 
+def calculate_end_sub_date(subscribe):
+    sub_type = subscribe.sub_type
+    subscription_start = subscribe.subscription_start
+    return subscription_start + timezone.timedelta(days=int(sub_type) * 30)
+
+
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
-    keyboard = [['Назад ⬅']]
+
     for subscribe in user.subscribes.all():
-        subscription_start = subscribe.subscription_start
-        allergy = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
-        sub_type = subscribe.sub_type
-        end_sub_date = subscription_start + timezone.timedelta(days=int(sub_type) * 30)
+        allergies = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
+        end_sub_date = calculate_end_sub_date(subscribe)
         # TODO use 'continue' button only on subs that near to end_sub, not on active
         if end_sub_date > timezone.now().date():
             subscription = dedent(
                 f'''
-            {subscribe.title} от {subscription_start}\n
+            {subscribe.title} от {subscribe.subscription_start}\n
+            Subscribe_ID: {subscribe.id}
             Заканчивается: {end_sub_date}
             Предпочтения: {subscribe.preference}
-            Непереносимость продуктов: {allergy}
+            Непереносимость продуктов: {allergies}
             Количество приемов пищи в день: {subscribe.number_of_meals} приема
             Количество человек: {subscribe.persons_quantity} человек
-            Подписка на: {sub_type} месяцев
+            Подписка на: {subscribe.sub_type} месяцев
             ''')
 
             context.bot.send_message(
                 text=subscription,
-                chat_id=context.user_data['user_id'],
-                reply_markup=InlineKeyboardMarkup
-                (inline_keyboard=[[InlineKeyboardButton('Продлить! (В разработке)',
-                                                        callback_data=f'{subscribe.id}')]]))
+                chat_id=user_id,
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton('Продлить! (В разработке)',
+                                              callback_data=f'{subscribe.id}')]
+                    ],
+                ),
+            )
 
     return BotStates.GREET_USER
 
