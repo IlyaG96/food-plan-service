@@ -40,8 +40,16 @@ def _update_database():
     run('./env/bin/python manage.py migrate --noinput')
 
 
+def _reload_services():
+    run('sudo systemctl food.socket food.service foodbot.service')
+
+
 def _daemon_reload():
-    run('sudo systemctl daemon-reload', shell=False)
+    run('sudo systemctl daemon-reload')
+
+
+def nginx_reload():
+    run('sudo nginx -t && sudo systemctl restart nginx')
 
 
 
