@@ -1,4 +1,5 @@
 import random
+import pathlib
 from enum import Enum
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -376,18 +377,28 @@ def send_notification(context):
 
 
 def send_dish(update, context):
-
     callback_query = update.callback_query
     dish_id = callback_query.data.split('reg')[0]
     dish = Dish.objects.prefetch_related('ingredients').get(id=dish_id)
     dish_ingredients = ''.join([ingredient.title for ingredient in dish.ingredients.all()])
-
-    context.bot.send_message(
+    picture = dish.image.url
+    path = pathlib.Path().resolve()
+    photo_path = str(path) + str(picture)
+    context.bot.send_photo(
+        photo=open(file=photo_path, mode='rb'),
         chat_id=callback_query.message.chat.id,
-        text=dedent(f'''
+        caption=dedent(f'''
         Для приготовления блюда "{dish.title}" вам понадобятся:
-        {dish_ingredients}
+        {dish_ingredients}        
         ''')
+    )
+    context.bot.send_message(
+        text=dedent(f'''
+        Способ приготовления:
+        {dish.cooking_method}
+        '''
+                    ),
+        chat_id=callback_query.message.chat.id,
     )
 
 
