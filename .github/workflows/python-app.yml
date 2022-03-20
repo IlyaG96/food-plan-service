@@ -23,5 +23,4 @@ jobs:
         run:  python manage.py migrate
       - name: reload daemons
         run:  sudo systemctl restart food.socket food.service foodbot.service
-        echo: successful deployment
 
