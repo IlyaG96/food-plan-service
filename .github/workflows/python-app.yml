@@ -13,8 +13,12 @@ jobs:
           host: ${{secrets.SSH_HOST}}
           key: ${{secrets.SSH_KEY}}
           username: ${{secrets.SSH_USERNAME}}
-      - name: updat_deploy
-        run: cd /home/django/code/food-plan-service
+      - name: list dir
+        run: ls
+      - name: go home
+        run: cd ~/
+      - name: list dir again
+        run: ls
       - name: pull changes
         run: git pull
       - name: activate python
