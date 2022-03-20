@@ -13,8 +13,9 @@ def deploy():
         _update_virtualenv()
         _update_static_files()
         _update_database()
+        _reload_services()
         _daemon_reload()
-        _get_latest_source()
+        _nginx_reload()
 
 
 def _get_latest_source():
@@ -48,7 +49,7 @@ def _daemon_reload():
     run('sudo systemctl daemon-reload')
 
 
-def nginx_reload():
+def _nginx_reload():
     run('sudo nginx -t && sudo systemctl restart nginx')
 
 
