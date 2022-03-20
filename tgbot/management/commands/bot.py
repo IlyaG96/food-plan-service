@@ -372,7 +372,6 @@ def send_notification(context):
                     )
 
                 except BadRequest as e:
-                    print(e)
                     pass
 
 
