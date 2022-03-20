@@ -1,3 +1,5 @@
+import sys
+
 from fabric.contrib.files import exists
 from fabric.api import cd, local, run, hosts
 
@@ -18,7 +20,9 @@ def deploy():
 
 def _get_latest_source():
     if exists('.git'):
-        run('git pull')
+        msg = run('echo | git pull')
+        if 'Already up to date.' in msg:
+            sys.exit('Already up to date.')
     else:
         run(f'git clone {REPO_URL} .')
     current_commit = local("git log -n 1 --format=%H", capture=True)
@@ -39,6 +43,3 @@ def _daemon_reload():
 
 def _nginx_reload():
     run('sudo nginx -t && sudo systemctl restart nginx')
-
-
-

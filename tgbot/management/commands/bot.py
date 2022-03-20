@@ -508,7 +508,7 @@ def main():
 
     dispatcher.add_handler(conv_handler)
     job_queue.set_dispatcher(dispatcher)
-    job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=5.0)
+    job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=7200.0)
 
     updater.start_polling()
 
