@@ -6,3 +6,4 @@ requests==2.27.1
 beautifulsoup4==4.10.0
 django-import-export==2.7.1
 lxml==4.8.0
+Fabric3==1.14.post1
