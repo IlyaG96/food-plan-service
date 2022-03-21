@@ -160,7 +160,7 @@ def get_allergy(update, context):
     update.message.reply_text(
         'Пометь крестиком \U0000274C те продукты, на которые у тебя аллергия. Как только закончишь, нажимай "Готово", '
         'Если аллергии нет, можно нажать "Пропустить"',
-        reply_markup=ReplyKeyboardMarkup(keyboard=[['Пропустить', 'Готово']],
+        reply_markup=ReplyKeyboardMarkup(keyboard=[['Назад ⬅', 'Пропустить', 'Готово']],
                                          resize_keyboard=True,
                                          ),
     )
@@ -566,15 +566,10 @@ def main():
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), get_portion_size),
                 MessageHandler(Filters.text, get_preferences)
             ],
-            BotStates.GET_ALLERGY: [
-                MessageHandler(Filters.regex(r'[а-яА-Я ]{2,20}$'), get_portions_quantity),
-                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
-                MessageHandler(Filters.regex(r'^Пропустить$'), get_subscription_length),
-                MessageHandler(Filters.text, get_allergy)
-            ],
             BotStates.HANDLE_ALLERGY: [
                 CallbackQueryHandler(handle_allergy, pattern='[а-яА-Я\U0000274C\U0001F7E2 ]{2,30}$'),
                 CallbackQueryHandler(get_portions_quantity, pattern='^Готово$'),
+                MessageHandler(Filters.regex(r'^Назад ⬅$'), get_preferences),
                 MessageHandler(Filters.regex(r'^Пропустить$'), get_portions_quantity),
                 MessageHandler(Filters.regex(r'^Готово'), get_portions_quantity),
             ],
