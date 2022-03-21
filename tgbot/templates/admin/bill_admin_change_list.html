@@ -107,7 +107,8 @@
         transform: translateX(-50%);
         text-align: center;
         font-weight: bold;
-]    }
+        opacity: 0.1;
+    }
 
     </style>
 
@@ -116,7 +117,7 @@
             {% for x in summary_over_time %}
                 <div class="bar" style="height:{{x.percent| intword}}%">
                     <div class="bar-tooltip">
-                        {{x.total | default:0 | intcomma }}<br>
+                        {{x.total | default:0 | intcomma }} руб<br>
                         {{x.period | date:"d/m/Y"}}
                     </div>
                 </div>
