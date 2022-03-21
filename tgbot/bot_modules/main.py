@@ -21,7 +21,7 @@ from telegram.ext import (CallbackQueryHandler,
 from tgbot.models import User, Allergy, Preference, Bill, Subscribe, Dish
 from telegram.error import BadRequest
 from textwrap import dedent
-
+from django.db.models import Count
 
 class BotStates(Enum):
     GREET_USER = 1
@@ -373,11 +373,11 @@ def send_notification(context):
 
 
 def get_dishes_to_show(subscribe_id):
-    subscribe = Subscribe.objects.get(id=subscribe_id)
+    subscribe = Subscribe.objects.annotate(all_shown_dishes=Count('shown_dishes')).get(id=subscribe_id)
     days_gone = timezone.now().date() - subscribe.subscription_start
     number_of_meals = subscribe.number_of_meals
     dishes_shown = number_of_meals * days_gone.days
-    if subscribe.shown_dishes.all().count() < dishes_shown:
+    if subscribe.all_shown_dishes < dishes_shown:
         available_dishes = Subscribe.select_available_dishes(subscribe)
         for dish in available_dishes.all()[:dishes_shown]:
             subscribe.shown_dishes.add(dish)
@@ -402,19 +402,21 @@ def send_dish(update, context):
         context.bot.send_photo(
             photo=open(file=photo_path, mode='rb'),
             chat_id=callback_query.message.chat.id,
+            reply_markup='',
+
             caption=dedent(f'''
             Для приготовления блюда "{dish.title}" вам понадобятся:
             {dish_ingredients}        
             ''')
         )
-        context.bot.send_message(
-            text=dedent(f'''
-            Способ приготовления:
-            {dish.cooking_method}
-            '''
-                        ),
-            chat_id=callback_query.message.chat.id,
-        )
+    #    context.bot.send_message(
+    #        text=dedent(f'''
+    #        Способ приготовления:
+    #        {dish.cooking_method}
+    #        '''
+    #                    ),
+    #        chat_id=callback_query.message.chat.id,
+    #    )
 
 
 def calculate_end_sub_date(subscribe):
