@@ -578,6 +578,8 @@ def main():
             ],
             BotStates.HANDLE_DISH_DESCRIPTION: [
                 CallbackQueryHandler(send_dish_ingredients, pattern=r'[0-9]{1,2}$'),
+                MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
+                MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
