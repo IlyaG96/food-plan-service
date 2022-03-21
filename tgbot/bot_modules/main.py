@@ -41,6 +41,7 @@ class BotStates(Enum):
     HANDLE_SUBSCRIPTIONS = 14
     HANDLE_DISH = 15
     HANDLE_DISH_DESCRIPTION = 16
+    HANDLE_USER_MARK = 17
 
 
 def build_menu(buttons, n_cols,
@@ -455,9 +456,35 @@ def send_dish_ingredients(update, context):
         '''),
         chat_id=callback_query.message.chat.id,
         reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton('Мне такое не нравится', callback_data='Дизлайк')],
-                             [InlineKeyboardButton('Мне такое по душе!', callback_data='Лайк')]]
+            inline_keyboard=[[InlineKeyboardButton('Мне такое не нравится', callback_data=f'диз {dish.id}')],
+                             [InlineKeyboardButton('Мне такое по душе!', callback_data=f'лайк {dish.id}')]]
         ))
+
+    return BotStates.HANDLE_USER_MARK
+
+
+def handle_user_mark(update, context):
+    callback_query = update.callback_query
+
+    user = User.objects.get(
+        chat_id=callback_query.message.chat.id
+    )
+    mark, dish_id = callback_query.data.split(' ')
+    if mark == 'лайк':
+        user.favorite_dishes.add(Dish.objects.get(id=dish_id))
+        user.save()
+    else:
+        user.unloved_dishes.add(Dish.objects.get(id=dish_id))
+        user.save()
+
+    context.bot.send_message(
+        chat_id=callback_query.message.chat.id,
+        text='Оценка учтена'
+    )
+
+    return BotStates.GREET_USER
+
+
 
 
 def calculate_end_sub_date(subscribe):
@@ -580,6 +607,9 @@ def main():
                 CallbackQueryHandler(send_dish_ingredients, pattern=r'[0-9]{1,2}$'),
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
                 MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
+            ],
+            BotStates.HANDLE_USER_MARK: [
+                CallbackQueryHandler(handle_user_mark)
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
