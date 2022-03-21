@@ -317,7 +317,7 @@ def precheckout(update, _):
 
 def complete(update, context):
     user = User.objects.get(chat_id=context.user_data['user_id'])
-    
+
     portions_quantity = context.user_data['portions_quantity']
     portion_size = context.user_data['portion_size']
     allergens = context.user_data['allergens']
@@ -469,8 +469,6 @@ def calculate_end_sub_date(subscribe):
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
-    update.message.reply_text('Список активных подписок:',
-                              reply_markup=ReplyKeyboardRemove())
 
     for subscribe in user.subscribes.all():
         allergies = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
