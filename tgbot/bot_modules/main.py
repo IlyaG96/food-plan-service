@@ -254,24 +254,12 @@ def check_order(update, context):
     price = int(portions_quantity) * int(portion_size) * int(subscription_length)
     context.user_data['price'] = price
 
-    preference = Preference.objects.get(title=preferences)
-    subscription, created = Subscribe.objects.get_or_create(
-        title='Подписка',
-        subscriber=user,
-        preference=preference,
-        number_of_meals=portions_quantity,
-        persons_quantity=portion_size,
-        sub_type=subscription_length,
-        subscription_start=timezone.now(),
-    )
-
     if allergens:
         allergens = list(filter(lambda word: '\U0000274C' in word, allergens))
+        context.user_data['allergens'] = []
         for allergen in allergens:
             allergen = allergen.split(' \U0000274C')[0]
-            subscription.allergy.add(
-                Allergy.objects.get(title=allergen)
-            )
+            context.user_data['allergens'].append(allergen)
 
     order = dedent(
         f'''
@@ -285,17 +273,6 @@ def check_order(update, context):
     Общая стоимость: {price} руб.
     Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
-
-    # TODO must be in done() function on production
-
-    user = User.objects.get(chat_id=context.user_data['user_id'])
-    bill = Bill.objects.create(
-        user=user,
-        subscription=subscription,
-        creation_date=timezone.now(),
-        price=context.user_data['price'],
-    )
-    bill.save()
 
     keyboard = [['Перейти к оплате!', 'Назад ⬅']]
     update.message.reply_text(
@@ -340,6 +317,39 @@ def precheckout(update, _):
 
 
 def complete(update, context):
+    user = User.objects.get(chat_id=context.user_data['user_id'])
+    
+    portions_quantity = context.user_data['portions_quantity']
+    portion_size = context.user_data['portion_size']
+    allergens = context.user_data['allergens']
+    preferences = context.user_data['preferences']
+    preference = Preference.objects.get(title=preferences)
+    subscription_length = context.user_data['subscription_length']
+
+    subscription= Subscribe.objects.create(
+        title='Подписка',
+        subscriber=user,
+        preference=preference,
+        number_of_meals=portions_quantity,
+        persons_quantity=portion_size,
+        sub_type=subscription_length,
+        subscription_start=timezone.now(),
+    )
+
+    if allergens:
+        for allergen in allergens:
+            subscription.allergy.add(
+                Allergy.objects.get(title=allergen)
+            )
+
+    bill = Bill.objects.create(
+        user=user,
+        subscription=subscription,
+        creation_date=timezone.now(),
+        price=context.user_data['price'],
+    )
+    bill.save()
+    
     keyboard = [['Мои подписки', 'Новая подписка']]
     update.message.reply_text(
         'Спасибо! Чтобы получить блюдо дня, \n'
