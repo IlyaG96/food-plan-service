@@ -1,4 +1,5 @@
 import pathlib
+import random
 from enum import Enum
 from django.conf import settings
 from django.utils import timezone
@@ -55,12 +56,18 @@ def build_menu(buttons, n_cols,
     return menu
 
 
+def calculate_end_sub_date(subscribe):
+    sub_type = subscribe.sub_type
+    subscription_start = subscribe.subscription_start
+    return subscription_start + timezone.timedelta(days=int(sub_type) * 30)
+
+
 def start(update, context):
     user_id = update.message.chat_id
     context.user_data['user_id'] = user_id
     if not User.objects.filter(chat_id__contains=user_id):
         return get_username(update, context)
-    keyboard = [['Мои подписки', 'Новая подписка']]
+    keyboard = [['Мои подписки', 'Новая подписка', 'Хочу кушать']]
     update.message.reply_text('Привет! '
                               'Я - бот, который составит для тебя рацион питания и упростит жизнь. '
                               'Хочешь посмотреть свои подписки или создать новую?',
@@ -434,6 +441,28 @@ def send_dish(update, context):
     return BotStates.HANDLE_DISH_DESCRIPTION
 
 
+def send_random_dish(update, context):
+    user = User.objects.prefetch_related('subscribes').get(chat_id=context.user_data['user_id'])
+    user_subs = user.subscribes.all()
+    rand_sub = random.choice(user_subs)
+
+    # end_sub_date = calculate_end_sub_date(rand_sub)  # TODO should be in models !
+    dishes = Subscribe.select_available_dishes(rand_sub)
+    rand_dish = random.choice(dishes)
+    picture = rand_dish.image.url
+    path = pathlib.Path().resolve()
+    photo_path = str(path) + str(picture)
+    context.bot.send_photo(
+        photo=open(file=photo_path, mode='rb'),
+        chat_id=context.user_data['user_id'],
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton('Покажи рецепт', callback_data=rand_dish.id)]]),
+        caption=f'Ух ты! сегодня будет {rand_dish.title}! '
+    )
+
+    return BotStates.HANDLE_DISH_DESCRIPTION
+
+
 def send_dish_ingredients(update, context):
     callback_query = update.callback_query
     dish_id = callback_query.data
@@ -487,20 +516,13 @@ def handle_user_mark(update, context):
     return BotStates.GREET_USER
 
 
-def calculate_end_sub_date(subscribe):
-    sub_type = subscribe.sub_type
-    subscription_start = subscribe.subscription_start
-    return subscription_start + timezone.timedelta(days=int(sub_type) * 30)
-
-
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
 
     for subscribe in user.subscribes.all():
         allergies = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
-        end_sub_date = calculate_end_sub_date(subscribe)
-        # TODO use 'continue' button only on subs that near to end_sub, not on active
+        end_sub_date = calculate_end_sub_date(subscribe) # TODO should be in models
         if end_sub_date > timezone.now().date():
             subscription = dedent(
                 f'''
@@ -536,6 +558,7 @@ def main():
         states={
             BotStates.GREET_USER: [
                 CallbackQueryHandler(send_dish, pattern='[0-9]{1,10}$'),
+                MessageHandler(Filters.regex(r'Хочу кушать$'), send_random_dish),
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
                 MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
                 # MessageHandler(Filters.text, get_username)
