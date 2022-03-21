@@ -28,7 +28,6 @@ class BillAdmin(admin.ModelAdmin):
     change_list_template = 'admin/bill_admin_change_list.html'
     date_hierarchy = 'creation_date'
 
-
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(
             request,
