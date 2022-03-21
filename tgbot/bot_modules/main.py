@@ -326,7 +326,7 @@ def complete(update, context):
     preference = Preference.objects.get(title=preferences)
     subscription_length = context.user_data['subscription_length']
 
-    subscription= Subscribe.objects.create(
+    subscription = Subscribe.objects.create(
         title='Подписка',
         subscriber=user,
         preference=preference,
@@ -349,7 +349,7 @@ def complete(update, context):
         price=context.user_data['price'],
     )
     bill.save()
-    
+
     keyboard = [['Мои подписки', 'Новая подписка']]
     update.message.reply_text(
         'Спасибо! Чтобы получить блюдо дня, \n'
@@ -398,7 +398,8 @@ def send_notification(context):
                     pass
 
 
-def get_dishes_to_show(subscribe_id):
+def get_dishes_to_show(subscribe_id, user_id):
+    user = User.objects.prefetch_related('unloved_dishes').prefetch_related('favorite_dishes').get(chat_id=user_id)
     subscribe = Subscribe.objects.annotate(all_shown_dishes=Count('shown_dishes')).get(id=subscribe_id)
     days_gone = timezone.now().date() - subscribe.subscription_start
     number_of_meals = subscribe.number_of_meals
@@ -408,16 +409,17 @@ def get_dishes_to_show(subscribe_id):
         for dish in available_dishes.all()[:dishes_shown]:
             subscribe.shown_dishes.add(dish)
     dishes_shown_id = [dish_shown.id for dish_shown in subscribe.shown_dishes.all()]
-    dishes_to_show = Subscribe.select_available_dishes(subscribe) \
-        .exclude(id__in=dishes_shown_id)
+    dishes_to_show = (Subscribe.select_available_dishes(subscribe)
+                               .exclude(id__in=dishes_shown_id)
+                               .exclude(id__in=user.unloved_dishes.all()))
     return dishes_to_show.prefetch_related('ingredients')[:number_of_meals]
 
 
 def send_dish(update, context):
     callback_query = update.callback_query
     subscribe_id = callback_query.data
-
-    dishes = get_dishes_to_show(subscribe_id)
+    user_id = callback_query.message.chat.id
+    dishes = get_dishes_to_show(subscribe_id, user_id)
     for dish in dishes:
         picture = dish.image.url
         path = pathlib.Path().resolve()
@@ -483,8 +485,6 @@ def handle_user_mark(update, context):
     )
 
     return BotStates.GREET_USER
-
-
 
 
 def calculate_end_sub_date(subscribe):
