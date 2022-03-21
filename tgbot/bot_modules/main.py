@@ -252,7 +252,6 @@ def check_order(update, context):
     subscription_length = context.user_data['subscription_length']
 
     price = int(portions_quantity) * int(portion_size) * int(subscription_length)
-    # in test payment price should be less than 1000 rub!
     context.user_data['price'] = price
 
     preference = Preference.objects.get(title=preferences)
@@ -403,14 +402,9 @@ def send_dish(update, context):
             photo=open(file=photo_path, mode='rb'),
             chat_id=callback_query.message.chat.id,
             reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[[InlineKeyboardButton('Хочу приготовить!', callback_data=dish.id)]]
-                #                       [InlineKeyboardButton('Мне такое не нравится',  callback_data='Дизлайк')],
-                #                      [InlineKeyboardButton('Мне такое по душе!', callback_data='Лайк')]]
-            ),
-
+                inline_keyboard=[[InlineKeyboardButton('Хочу приготовить!', callback_data=dish.id)]]),
             caption=dish.title
         )
-
     return BotStates.HANDLE_DISH_DESCRIPTION
 
 
@@ -436,7 +430,11 @@ def send_dish_ingredients(update, context):
         
         {dish.cooking_method}
         '''),
-        chat_id=callback_query.message.chat.id)
+        chat_id=callback_query.message.chat.id,
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton('Мне такое не нравится', callback_data='Дизлайк')],
+                             [InlineKeyboardButton('Мне такое по душе!', callback_data='Лайк')]]
+        ))
 
 
 def calculate_end_sub_date(subscribe):
@@ -448,6 +446,8 @@ def calculate_end_sub_date(subscribe):
 def handle_subscriptions(update, context):
     user_id = context.user_data['user_id']
     user = User.objects.get(chat_id=user_id)
+    update.message.reply_text('Список активных подписок:',
+                              reply_markup=ReplyKeyboardRemove())
 
     for subscribe in user.subscribes.all():
         allergies = ', '.join([allergy.title for allergy in subscribe.allergy.all()])
