@@ -444,9 +444,20 @@ def send_dish(update, context):
 def send_random_dish(update, context):
     user = User.objects.prefetch_related('subscribes').get(chat_id=context.user_data['user_id'])
     user_subs = user.subscribes.all()
-    rand_sub = random.choice(user_subs)
+    active_subs = []
+    for subscribe in user_subs:
+        end_sub_date = calculate_end_sub_date(subscribe)
+        if end_sub_date > timezone.now().date():
+            active_subs.append(subscribe)
 
-    # end_sub_date = calculate_end_sub_date(rand_sub)  # TODO should be in models !
+    if not active_subs:
+        keyboard = [['Мои подписки', 'Новая подписка', 'Хочу кушать']]
+        update.message.reply_text('Сначала нужно подписаться. Нажми "Новая подписка"',
+                                  reply_markup=ReplyKeyboardMarkup(keyboard=keyboard,
+                                                                   resize_keyboard=True))
+        return BotStates.GREET_USER
+
+    rand_sub = random.choice(active_subs)
     dishes = Subscribe.select_available_dishes(rand_sub)
     rand_dish = random.choice(dishes)
     picture = rand_dish.image.url
@@ -510,7 +521,7 @@ def handle_user_mark(update, context):
 
     context.bot.send_message(
         chat_id=callback_query.message.chat.id,
-        text='Оценка учтена'
+        text='Оценка учтена. Можно пользоваться клавиатурой для навигации'
     )
 
     return BotStates.GREET_USER
