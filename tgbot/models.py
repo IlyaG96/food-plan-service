@@ -165,12 +165,8 @@ class Subscribe(models.Model):
     def select_available_dishes(self):
         allergens = [allergy for allergy in self.allergy.all()]
         preference = self.preference
-        shown_dishes_id = [shown_dish.id for shown_dish in self.shown_dishes.all()]
         dishes = Dish.objects.filter(preferences=preference) \
-                             .exclude(
-                                 allergy__in=allergens,
-                                 id__in=shown_dishes_id,
-                             )
+                             .exclude(allergy__in=allergens)
         self.dishes = dishes
 
         return self.dishes

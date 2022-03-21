@@ -374,13 +374,27 @@ def send_notification(context):
 
 def get_dishes_to_show(subscribe_id):
     subscribe = Subscribe.objects.get(id=subscribe_id)
-    available_dishes = Subscribe.select_available_dishes(subscribe)
-    return available_dishes.prefetch_related('ingredients')[:subscribe.number_of_meals]
+    days_gone = timezone.now().date() - subscribe.subscription_start
+    number_of_meals = subscribe.number_of_meals
+    dishes_shown = number_of_meals * days_gone.days
+    if subscribe.shown_dishes.all().count() < dishes_shown:
+        print('Меньше')
+        available_dishes = Subscribe.select_available_dishes(subscribe)
+        for dish in available_dishes.all()[:dishes_shown]:
+            subscribe.shown_dishes.add(dish)
+    dishes_shown_id = [dish_shown.id for dish_shown in subscribe.shown_dishes.all()]
+    dishes_to_show = Subscribe.select_available_dishes(subscribe) \
+                              .exclude(id__in=dishes_shown_id)
+    print(subscribe.shown_dishes.all())
+    print(Subscribe.select_available_dishes(subscribe))
+    print(dishes_to_show)
+    return dishes_to_show.prefetch_related('ingredients')[:number_of_meals]
 
 
 def send_dish(update, context):
     callback_query = update.callback_query
     subscribe_id = callback_query.data
+    
     dishes = get_dishes_to_show(subscribe_id)
     for dish in dishes:
         dish_ingredients = ''.join(
@@ -425,7 +439,6 @@ def handle_subscriptions(update, context):
             subscription = dedent(
                 f'''
             {subscribe.title} от {subscribe.subscription_start}\n
-            Subscribe_ID: {subscribe.id}
             Заканчивается: {end_sub_date}
             Предпочтения: {subscribe.preference}
             Непереносимость продуктов: {allergies}
@@ -451,7 +464,7 @@ def handle_subscriptions(update, context):
 def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
-    job_queue = dispatcher.job_queue
+    # job_queue = dispatcher.job_queue
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -533,8 +546,8 @@ def main():
     # dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))  # TODO fix this
 
     dispatcher.add_handler(conv_handler)
-    job_queue.set_dispatcher(dispatcher)
-    job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=7200.0)
+    # job_queue.set_dispatcher(dispatcher)
+    # job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=7200.0)
 
     updater.start_polling()
 

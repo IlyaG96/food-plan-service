@@ -103,7 +103,7 @@ class User(admin.ModelAdmin):
 @admin.register(Subscribe)
 class Subscribe(admin.ModelAdmin):
     raw_id_fields = ('subscriber', 'preference', 'allergy')
-    readonly_fields = ('allowed_dishes', 'subscription_start', 'shown_dishes')
+    readonly_fields = ('allowed_dishes', 'shown_dishes')
     filter_horizontal = ('allergy',)
     fieldsets = (
         ('Общее', {
