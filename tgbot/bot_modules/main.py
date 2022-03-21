@@ -458,8 +458,12 @@ def send_random_dish(update, context):
         return BotStates.GREET_USER
 
     rand_sub = random.choice(active_subs)
+
     dishes = Subscribe.select_available_dishes(rand_sub)
-    rand_dish = random.choice(dishes)
+    available_dishes = dishes.exclude(id__in=user.unloved_dishes.all())
+
+    rand_dish = random.choice(available_dishes)
+
     picture = rand_dish.image.url
     path = pathlib.Path().resolve()
     photo_path = str(path) + str(picture)
