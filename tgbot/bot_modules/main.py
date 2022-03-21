@@ -338,6 +338,20 @@ def precheckout(update, _):
     return BotStates.SUCCESS_PAYMENT
 
 
+def complete(update, context):
+    keyboard = [['Мои подписки', 'Новая подписка']]
+    update.message.reply_text(
+        'Спасибо! Чтобы получить блюдо дня, \n'
+        'зайдите в свои подписки.',
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=keyboard,
+            resize_keyboard=True,
+        ),
+    )
+
+    return BotStates.GREET_USER
+
+
 def done(update, context):
     update.message.reply_text(
         'До свидания!',
@@ -548,7 +562,7 @@ def main():
                 PreCheckoutQueryHandler(precheckout),
             ],
             BotStates.SUCCESS_PAYMENT: [
-                MessageHandler(Filters.successful_payment, done)
+                MessageHandler(Filters.successful_payment, complete)
             ],
             BotStates.HANDLE_SUBSCRIPTIONS: [
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
