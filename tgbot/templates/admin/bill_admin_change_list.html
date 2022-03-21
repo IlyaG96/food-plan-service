@@ -4,6 +4,7 @@
 {% endblock %}
 {% load humanize %}
 {% load mathtags %}
+{% load i18n %}
 
 {% block result_list %}
     <div class="results">
@@ -60,7 +61,7 @@
     <style>
     .bar-chart {
         height: 100px;
-        padding-top: 60px;
+        padding-top: 100px;
         display: flex;
         justify-content: space-around;
         overflow: hidden;
@@ -69,7 +70,7 @@
         background-color: #79aec8;
         flex: 100%;
         align-self: flex-end;
-        margin-right: 2px;
+        margin-right: 10px;
         position: relative;
     }
     .bar-chart .bar:last-child {
@@ -106,18 +107,19 @@
         left: 50%;
         transform: translateX(-50%);
         text-align: center;
-        font-weight: bold;
-]    }
+        opacity: 1;
+    }
 
     </style>
+    <h2> {% blocktrans %} Статистика продаж за выбранный период {% endblocktrans %} </h2>
 
     <div class="results">
         <div class="bar-chart">
             {% for x in summary_over_time %}
                 <div class="bar" style="height:{{x.percent| intword}}%">
                     <div class="bar-tooltip">
-                        {{x.total | default:0 | intcomma }}<br>
-                        {{x.period | date:"d/m/Y"}}
+                        {{x.total | default:0 | intcomma }} руб<br>
+                        {{x.period | date:"d/m/y"}}
                     </div>
                 </div>
             {% endfor %}

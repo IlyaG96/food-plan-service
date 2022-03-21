@@ -251,7 +251,7 @@ def check_order(update, context):
     preferences = context.user_data['preferences']
     subscription_length = context.user_data['subscription_length']
 
-    price = int(portions_quantity) * int(portion_size) * int(subscription_length)
+    price = int(portions_quantity) * int(portion_size) * int(subscription_length) * 100
     context.user_data['price'] = price
 
     if allergens:
@@ -295,7 +295,6 @@ def take_payment(update, context):
     title = 'Ваш заказ'
     description = f'Оплата заказа стоимостью {price} рублей'
     payload = 'Custom-Payload'
-
     currency = 'RUB'
     prices = [LabeledPrice('Стоимость', price * 100)]
 
