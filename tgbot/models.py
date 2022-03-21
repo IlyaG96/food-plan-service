@@ -203,5 +203,5 @@ class Bill(models.Model):
         return f'Чек пользователя {self.user.first_name}'
 
     class Meta:
-        verbose_name = 'Чек'
-        verbose_name_plural = 'Чеки'
+        verbose_name = 'Продажа'
+        verbose_name_plural = 'Продажи'

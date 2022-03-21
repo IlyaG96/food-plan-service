@@ -7,7 +7,7 @@ from django.db.models import Sum, Min, Max, DateTimeField
 admin.site.register(Product)
 admin.site.register(Preference)
 admin.site.register(Allergy)
-admin.site.register(Dish)
+
 
 
 def get_next_in_date_hierarchy(request, date_hierarchy):
@@ -86,6 +86,13 @@ class BillAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.StackedInline):
     model = Subscribe
+
+
+@admin.register(Dish)
+class DishAdmin(admin.ModelAdmin):
+    raw_id_fields = ('preferences', 'allergy')
+    list_filter = ('preferences', 'allergy')
+    search_fields = ('title',)
 
 
 @admin.register(User)
