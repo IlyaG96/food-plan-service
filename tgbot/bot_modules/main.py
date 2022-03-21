@@ -378,16 +378,12 @@ def get_dishes_to_show(subscribe_id):
     number_of_meals = subscribe.number_of_meals
     dishes_shown = number_of_meals * days_gone.days
     if subscribe.shown_dishes.all().count() < dishes_shown:
-        print('Меньше')
         available_dishes = Subscribe.select_available_dishes(subscribe)
         for dish in available_dishes.all()[:dishes_shown]:
             subscribe.shown_dishes.add(dish)
     dishes_shown_id = [dish_shown.id for dish_shown in subscribe.shown_dishes.all()]
     dishes_to_show = Subscribe.select_available_dishes(subscribe) \
                               .exclude(id__in=dishes_shown_id)
-    print(subscribe.shown_dishes.all())
-    print(Subscribe.select_available_dishes(subscribe))
-    print(dishes_to_show)
     return dishes_to_show.prefetch_related('ingredients')[:number_of_meals]
 
 
