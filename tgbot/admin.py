@@ -4,10 +4,13 @@ from django.db import models
 from django.db.models.functions import Trunc
 from django.db.models import Sum, Min, Max, DateTimeField
 
-admin.site.register(Product)
 admin.site.register(Preference)
 admin.site.register(Allergy)
 
+
+@admin.register(Product)
+class Product(admin.ModelAdmin):
+    search_fields = ('title',)
 
 
 def get_next_in_date_hierarchy(request, date_hierarchy):
@@ -108,6 +111,7 @@ class User(admin.ModelAdmin):
 
 @admin.register(Subscribe)
 class Subscribe(admin.ModelAdmin):
+    list_filter = ('subscriber',)
     raw_id_fields = ('subscriber', 'preference', 'allergy')
     readonly_fields = ('allowed_dishes', 'shown_dishes')
     filter_horizontal = ('allergy',)
