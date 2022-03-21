@@ -3,7 +3,6 @@ import random
 from enum import Enum
 from django.conf import settings
 from django.utils import timezone
-from random import choices
 from telegram import (
     LabeledPrice,
     ReplyKeyboardMarkup,
@@ -20,7 +19,6 @@ from telegram.ext import (CallbackQueryHandler,
                           MessageHandler,
                           Updater, )
 from tgbot.models import User, Allergy, Preference, Bill, Subscribe, Dish
-from telegram.error import BadRequest
 from textwrap import dedent
 from django.db.models import Count
 
@@ -126,9 +124,6 @@ def add_new_user(update, context):
 
 
 def get_portion_size(update, context):
-    # if update.message.text != 'Назад ⬅':
-
-    # TODO replace from db
     keyboard = build_menu([str(num) for num in range(1, 11)],
                           n_cols=5,
                           footer_buttons=['Назад ⬅'])
@@ -216,7 +211,6 @@ def handle_allergy(update, context):
 def get_portions_quantity(update, context):
     if update.message.text == 'Пропустить':
         context.user_data['allergens'] = None
-    # TODO replace from db
     keyboard = build_menu([str(num) for num in range(1, 7)],
                           n_cols=5,
                           footer_buttons=['Назад ⬅'])
@@ -234,7 +228,6 @@ def get_subscription_length(update, context):
     if update.message.text != 'Назад ⬅':
         portions_quantity = update.message.text
         context.user_data['portions_quantity'] = portions_quantity
-        # TODO replace from db
     keyboard = build_menu(['1', '3', '6', '9', '12'], n_cols=3, footer_buttons=['Назад ⬅'])
     update.message.reply_text(
         'На сколько месяцев оформить подписку?',
@@ -279,7 +272,6 @@ def check_order(update, context):
     Исключения из рациона: {allergens}
     Длительность подписки: {subscription_length} месяца
     Общая стоимость: {price} руб.
-    Тестовая оплата ЮКАССЫ должна быть менее 1000 рублей!
     ''')
 
     keyboard = [['Перейти к оплате!', 'Назад ⬅']]
@@ -377,32 +369,6 @@ def done(update, context):
     )
 
     return ConversationHandler.END
-
-
-def send_notification(context):
-    users = User.objects.all().prefetch_related('subscribes')
-
-    for user in users:
-        for subscribe in user.subscribes.all():
-            number_of_meals = subscribe.number_of_meals
-            end_sub_date = subscribe.subscription_start + timezone.timedelta(days=int(subscribe.sub_type) * 30)
-            if end_sub_date > timezone.now().date():
-                available_dishes = choices([dish for dish in Subscribe.select_available_dishes(subscribe)],
-                                           k=number_of_meals)
-                try:
-                    context.bot.send_message(
-                        chat_id=user.chat_id,
-                        text='Время кормить себя! Кажется, в соответствии с вашей подпиской, вы можете себе '
-                             'позволить: ',
-                        reply_markup=InlineKeyboardMarkup
-                        (inline_keyboard=[([InlineKeyboardButton(dish.title,
-                                                                 callback_data=f'{dish.id} reg')]) for dish in
-                                          available_dishes])
-                    )
-
-                except BadRequest as e:
-                    print(e)
-                    pass
 
 
 def get_dishes_to_show(subscribe_id, user_id):
@@ -570,7 +536,6 @@ def handle_subscriptions(update, context):
 def main():
     updater = Updater(settings.TGBOT_TOKEN)
     dispatcher = updater.dispatcher
-    # job_queue = dispatcher.job_queue
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -579,7 +544,6 @@ def main():
                 MessageHandler(Filters.regex(r'Хочу кушать$'), send_random_dish),
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
                 MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
-                # MessageHandler(Filters.text, get_username)
             ],
             BotStates.GET_USERNAME: [
                 MessageHandler(Filters.regex(r'[а-яА-Яa-zA-Z]{2,20}( )[а-яА-Яa-zA-Z]{2,20}$'),
@@ -593,7 +557,6 @@ def main():
                 MessageHandler(Filters.regex(r'^\+?\d{1,3}?( |-)?\d{3}( |-)?\d{3}( |-)?\d{2}( |-)?\d{2}$'),
                                add_new_user),
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), get_username),
-                # MessageHandler(Filters.text, get_user_phonenumber)
             ],
 
             BotStates.GET_PORTIONS_SIZE: [
@@ -653,12 +616,7 @@ def main():
         per_chat=False,
         allow_reentry=True
     )
-    # dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))  # TODO fix this
-
     dispatcher.add_handler(conv_handler)
-    # job_queue.set_dispatcher(dispatcher)
-    # job_queue.run_repeating(callback=send_notification, interval=settings.BOT_DELAY, first=7200.0)
-
     updater.start_polling()
 
     updater.idle()
