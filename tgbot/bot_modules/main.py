@@ -487,7 +487,10 @@ def send_dish_ingredients(update, context):
     dish_ingredients = ''.join(
         [ingredient.title for ingredient in dish.ingredients.all()]
     )
-
+    cooking_method = dish.cooking_method.split("'")[1] \
+                                        .replace('\\n\\n\\n', '\n') \
+                                        .replace('\\n', ' ') \
+                                        .replace('\\r', ' ')
     context.bot.send_message(
         text=dedent(
             f'''
@@ -498,7 +501,7 @@ def send_dish_ingredients(update, context):
         
         Способ приготовления:
         
-        {dish.cooking_method}
+        {cooking_method}
         '''),
         chat_id=callback_query.message.chat.id,
         reply_markup=InlineKeyboardMarkup(
