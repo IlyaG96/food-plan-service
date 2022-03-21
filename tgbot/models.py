@@ -138,10 +138,10 @@ class Subscribe(models.Model):
         default=1
     )
 
-    dish = models.ManyToManyField(
+    shown_dishes = models.ManyToManyField(
         Dish,
-        verbose_name='Блюда',
-        related_name='dishes',
+        verbose_name='Показанные блюда',
+        related_name='used_subscribes',
         blank=True
     )
     sub_type = models.CharField(
@@ -165,7 +165,12 @@ class Subscribe(models.Model):
     def select_available_dishes(self):
         allergens = [allergy for allergy in self.allergy.all()]
         preference = self.preference
-        dishes = Dish.objects.filter(preferences=preference).exclude(allergy__in=allergens)
+        shown_dishes_id = [shown_dish.id for shown_dish in self.shown_dishes.all()]
+        dishes = Dish.objects.filter(preferences=preference) \
+                             .exclude(
+                                 allergy__in=allergens,
+                                 id__in=shown_dishes_id,
+                             )
         self.dishes = dishes
 
         return self.dishes

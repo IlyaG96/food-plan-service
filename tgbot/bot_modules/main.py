@@ -372,30 +372,39 @@ def send_notification(context):
                     pass
 
 
+def get_dishes_to_show(subscribe_id):
+    subscribe = Subscribe.objects.get(id=subscribe_id)
+    available_dishes = Subscribe.select_available_dishes(subscribe)
+    return available_dishes.prefetch_related('ingredients')[:subscribe.number_of_meals]
+
+
 def send_dish(update, context):
     callback_query = update.callback_query
-    dish_id = callback_query.data.split('reg')[0]
-    dish = Dish.objects.prefetch_related('ingredients').get(id=dish_id)
-    dish_ingredients = ''.join([ingredient.title for ingredient in dish.ingredients.all()])
-    picture = dish.image.url
-    path = pathlib.Path().resolve()
-    photo_path = str(path) + str(picture)
-    context.bot.send_photo(
-        photo=open(file=photo_path, mode='rb'),
-        chat_id=callback_query.message.chat.id,
-        caption=dedent(f'''
-        Для приготовления блюда "{dish.title}" вам понадобятся:
-        {dish_ingredients}        
-        ''')
-    )
-    context.bot.send_message(
-        text=dedent(f'''
-        Способ приготовления:
-        {dish.cooking_method}
-        '''
-                    ),
-        chat_id=callback_query.message.chat.id,
-    )
+    subscribe_id = callback_query.data
+    dishes = get_dishes_to_show(subscribe_id)
+    for dish in dishes:
+        dish_ingredients = ''.join(
+            [ingredient.title for ingredient in dish.ingredients.all()]
+        )
+        picture = dish.image.url
+        path = pathlib.Path().resolve()
+        photo_path = str(path) + str(picture)
+        context.bot.send_photo(
+            photo=open(file=photo_path, mode='rb'),
+            chat_id=callback_query.message.chat.id,
+            caption=dedent(f'''
+            Для приготовления блюда "{dish.title}" вам понадобятся:
+            {dish_ingredients}        
+            ''')
+        )
+        context.bot.send_message(
+            text=dedent(f'''
+            Способ приготовления:
+            {dish.cooking_method}
+            '''
+                        ),
+            chat_id=callback_query.message.chat.id,
+        )
 
 
 def calculate_end_sub_date(subscribe):
@@ -430,7 +439,7 @@ def handle_subscriptions(update, context):
                 chat_id=user_id,
                 reply_markup=InlineKeyboardMarkup(
                     inline_keyboard=[
-                        [InlineKeyboardButton('Продлить! (В разработке)',
+                        [InlineKeyboardButton('Хочу есть!',
                                               callback_data=f'{subscribe.id}')]
                     ],
                 ),
@@ -447,6 +456,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             BotStates.GREET_USER: [
+                CallbackQueryHandler(send_dish, pattern='[0-9]{1,10}$'),
                 MessageHandler(Filters.regex(r'Мои подписки$'), handle_subscriptions),
                 MessageHandler(Filters.regex(r'Новая подписка$'), get_portion_size),
                 # MessageHandler(Filters.text, get_username)
@@ -520,7 +530,7 @@ def main():
         per_chat=False,
         allow_reentry=True
     )
-    dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))  # TODO fix this
+    # dispatcher.add_handler(CallbackQueryHandler(send_dish, pattern='[0-9 reg]{1,10}$'))  # TODO fix this
 
     dispatcher.add_handler(conv_handler)
     job_queue.set_dispatcher(dispatcher)
