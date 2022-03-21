@@ -17,11 +17,12 @@ from telegram.ext import (CallbackQueryHandler,
                           PreCheckoutQueryHandler,
                           Filters,
                           MessageHandler,
-                          Updater,)
+                          Updater, )
 from tgbot.models import User, Allergy, Preference, Bill, Subscribe, Dish
 from telegram.error import BadRequest
 from textwrap import dedent
 from django.db.models import Count
+
 
 class BotStates(Enum):
     GREET_USER = 1
@@ -39,6 +40,7 @@ class BotStates(Enum):
     SUCCESS_PAYMENT = 13
     HANDLE_SUBSCRIPTIONS = 14
     HANDLE_DISH = 15
+    HANDLE_DISH_DESCRIPTION = 16
 
 
 def build_menu(buttons, n_cols,
@@ -369,6 +371,7 @@ def send_notification(context):
                     )
 
                 except BadRequest as e:
+                    print(e)
                     pass
 
 
@@ -383,40 +386,57 @@ def get_dishes_to_show(subscribe_id):
             subscribe.shown_dishes.add(dish)
     dishes_shown_id = [dish_shown.id for dish_shown in subscribe.shown_dishes.all()]
     dishes_to_show = Subscribe.select_available_dishes(subscribe) \
-                              .exclude(id__in=dishes_shown_id)
+        .exclude(id__in=dishes_shown_id)
     return dishes_to_show.prefetch_related('ingredients')[:number_of_meals]
 
 
 def send_dish(update, context):
     callback_query = update.callback_query
     subscribe_id = callback_query.data
-    
+
     dishes = get_dishes_to_show(subscribe_id)
     for dish in dishes:
-        dish_ingredients = ''.join(
-            [ingredient.title for ingredient in dish.ingredients.all()]
-        )
         picture = dish.image.url
         path = pathlib.Path().resolve()
         photo_path = str(path) + str(picture)
         context.bot.send_photo(
             photo=open(file=photo_path, mode='rb'),
             chat_id=callback_query.message.chat.id,
-            reply_markup='',
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton('Хочу приготовить!', callback_data=dish.id)]]
+                #                       [InlineKeyboardButton('Мне такое не нравится',  callback_data='Дизлайк')],
+                #                      [InlineKeyboardButton('Мне такое по душе!', callback_data='Лайк')]]
+            ),
 
-            caption=dedent(f'''
-            Для приготовления блюда "{dish.title}" вам понадобятся:
-            {dish_ingredients}        
-            ''')
+            caption=dish.title
         )
-    #    context.bot.send_message(
-    #        text=dedent(f'''
-    #        Способ приготовления:
-    #        {dish.cooking_method}
-    #        '''
-    #                    ),
-    #        chat_id=callback_query.message.chat.id,
-    #    )
+
+    return BotStates.HANDLE_DISH_DESCRIPTION
+
+
+def send_dish_ingredients(update, context):
+    callback_query = update.callback_query
+    dish_id = callback_query.data
+
+    dish = Dish.objects.prefetch_related('ingredients').get(id=dish_id)
+
+    dish_ingredients = ''.join(
+        [ingredient.title for ingredient in dish.ingredients.all()]
+    )
+
+    context.bot.send_message(
+        text=dedent(
+            f'''
+        {dish.title}
+        
+        Вам понадобятся:
+        {dish_ingredients}
+        
+        Способ приготовления:
+        
+        {dish.cooking_method}
+        '''),
+        chat_id=callback_query.message.chat.id)
 
 
 def calculate_end_sub_date(subscribe):
@@ -535,6 +555,9 @@ def main():
                 MessageHandler(Filters.regex(r'^Назад ⬅$'), start),
                 MessageHandler(Filters.text, start)
             ],
+            BotStates.HANDLE_DISH_DESCRIPTION: [
+                CallbackQueryHandler(send_dish_ingredients, pattern=r'[0-9]{1,2}$'),
+            ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Выход$'), done)],
         per_user=True,
